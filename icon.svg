@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="flameGrad" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#0a1636"/>
+      <stop offset="45%" stop-color="#3b6bff"/>
+      <stop offset="100%" stop-color="#00e5ff"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2.2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect x="2" y="2" width="96" height="96" rx="22" fill="#03050c" stroke="#1a2c52" stroke-width="2"/>
+  <path filter="url(#glow)" fill="url(#flameGrad)" d="M50 10 C36 26 28 33 28 52 C28 70 38 82 50 82 C62 82 72 70 72 52 C72 39 65 33 60 24 C61 37 54 40 52 33 C50 25 55 19 50 10 Z"/>
+  <text x="50" y="61" font-family="Georgia, serif" font-size="32" font-weight="700" fill="#03050c" text-anchor="middle">&#8747;</text>
+</svg>
