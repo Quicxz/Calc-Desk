@@ -1,0 +1,3396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#03050c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Calc Dojo">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link id="faviconLink" rel="icon" type="image/png" href="icon-192.png">
+<title>計算道場 — Calc Dojo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<style>
+  :root{
+    --bg:#03050c;
+    --bg-alt:#050a16;
+    --surface:#0a1122;
+    --surface-2:#0e1830;
+    --line:#1a2c52;
+    --text:#e7f2ff;
+    --text-dim:#5d7ba8;
+    --cyan:#00e5ff;
+    --magenta:#3b6bff;
+    --gold:#7fdfff;
+    --green:#00e5ff;
+    --violet:#5b7cff;
+    --danger:#ff5470;
+    --c1:#00e5ff;
+    --c2:#3b82f6;
+    --c3:#7c8cff;
+    --c4:#38bdf8;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:#03050c;
+    color:var(--text);
+    font-family:'Space Grotesk',sans-serif;
+    min-height:100vh;
+    overflow-x:hidden;
+    cursor:none;
+  }
+  a,button,input,textarea,select,label,[data-play],.video-row,.cal-cell,.nav-btn,.gear-btn,.yt-ico,.side-ico,.yt-drag,.yt-resize{cursor:none;}
+  .cursor-dot,.cursor-ring{position:fixed;top:0;left:0;pointer-events:none;z-index:400;border-radius:50%;transform:translate(-50%,-50%);mix-blend-mode:screen;}
+  .cursor-dot{width:8px;height:8px;background:#00e5ff;box-shadow:0 0 12px #00e5ff;}
+  .cursor-ring{width:34px;height:34px;border:1px solid rgba(0,229,255,.7);transition:width .18s,height .18s,border-color .18s;}
+  body.cursor-down .cursor-ring{width:22px;height:22px;border-color:#fff;}
+  body.cursor-hover .cursor-ring{width:46px;height:46px;border-color:#7fdfff;}
+
+  .kanji-mark{font-family:serif;}
+  ::selection{background:var(--magenta);color:#fff;}
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+
+  /* bottom-only red blaze + embers + faint smoke */
+  .flames{position:fixed;inset:0;pointer-events:none;z-index:26;overflow:hidden;opacity:1;transition:opacity 1.4s ease;}
+  .fire-layer{position:absolute;left:0;right:0;bottom:0;width:100%;height:70vh;mix-blend-mode:screen;}
+  .fire-glow{position:absolute;left:0;right:0;bottom:0;width:100%;height:36vh;pointer-events:none;background:radial-gradient(ellipse at 50% 100%, rgba(0,190,255,.34) 0%, rgba(0,80,180,.12) 42%, transparent 76%);mix-blend-mode:screen;}
+  .ember-layer{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:30;mix-blend-mode:screen;opacity:1;transition:opacity 1.4s ease;}
+  body.player-on .scanlines{display:none;}
+  body.flames-off .flames,
+  body.flames-off .ember-layer{opacity:0;}
+  @media (max-width:600px){ .fire-layer{height:50vh;} .fire-glow{height:26vh;} }
+  @media (prefers-reduced-motion: reduce){ .fire-layer{opacity:.55;} .ember-layer{opacity:.35;} }
+  .scanlines{position:fixed;inset:0;pointer-events:none;z-index:5;background:repeating-linear-gradient(0deg,rgba(255,255,255,0.012) 0px,rgba(255,255,255,0.012) 1px,transparent 1px,transparent 3px);mix-blend-mode:overlay;}
+
+  .app{position:relative;z-index:1;min-height:100vh;}
+  @media (max-width:640px){ .sidebar{width:76px;} .main{margin-left:76px;} .brand-title,.brand-kanji,.brand-sub,.nav-label,.nav-btn .label{display:none;} .brand{align-items:center;} .nav-btn{justify-content:center;padding:12px 0;} .rank-chip{flex-direction:column;padding:8px 4px;} .rank-text{display:none;} }
+
+  /* SIDEBAR */
+  .sidebar{background:linear-gradient(180deg,var(--bg-alt),var(--bg));border-right:1px solid var(--line);padding:24px 16px;display:flex;flex-direction:column;gap:28px;position:fixed;top:0;left:0;width:230px;height:100vh;z-index:55;overflow-y:auto;}
+  .brand{display:flex;flex-direction:column;gap:2px;}
+  .brand-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:26px;letter-spacing:1px;background:linear-gradient(90deg,var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1;text-shadow:0 0 24px rgba(0,229,255,.35);}
+  .brand-kanji{font-size:13px;color:var(--text-dim);letter-spacing:4px;margin-top:4px;}
+  .brand-sub{font-size:11px;color:var(--text-dim);letter-spacing:2px;text-transform:uppercase;}
+
+  .rank-chip{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;}
+  .rank-badge{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Rajdhani';font-weight:700;font-size:18px;background:conic-gradient(from 180deg,var(--cyan),var(--violet),var(--gold),var(--cyan));color:#03050c;box-shadow:0 0 14px rgba(0,229,255,.5);}
+  .rank-text{display:flex;flex-direction:column;line-height:1.15;}
+  .rank-text b{font-size:13px;}
+  .rank-text span{font-size:11px;color:var(--text-dim);}
+
+  .nav{display:flex;flex-direction:column;gap:4px;}
+  .nav-label{font-size:10px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin:10px 4px 2px;}
+  .nav-btn{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--text-dim);cursor:pointer;font-family:'Space Grotesk';font-size:14px;font-weight:500;text-align:left;transition:.2s ease;}
+  .nav-btn:hover{color:var(--text);background:var(--surface);transform:translateX(2px);}
+  .nav-btn.active{color:var(--text);background:var(--surface-2);border-color:var(--line);box-shadow:inset 2px 0 0 var(--cyan),0 0 16px -6px rgba(0,229,255,.4);}
+  .nav-btn .ic{width:16px;text-align:center;}
+
+  /* MAIN */
+  .main{padding:28px 32px 60px;max-width:1180px;width:100%;margin:0 auto 0 246px;}
+  @media (max-width:600px){ .main{padding:18px 14px 60px;} }
+  .view{display:none;}
+  .view.active{display:block;animation:viewIn .45s cubic-bezier(.16,1,.3,1);}
+  @keyframes viewIn{from{opacity:0;transform:translateY(10px) scale(.985);}to{opacity:1;transform:translateY(0) scale(1);}}
+
+  .page-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:22px;flex-wrap:wrap;gap:12px;}
+  .page-title{font-family:'Rajdhani';font-weight:700;font-size:28px;letter-spacing:.5px;}
+  .page-title .glow{color:var(--cyan);text-shadow:0 0 18px rgba(77,227,209,.5);}
+  .page-desc{color:var(--text-dim);font-size:13px;margin-top:2px;}
+
+  .grid{display:grid;gap:18px;}
+  .grid-2{grid-template-columns:1.1fr .9fr;}
+  @media (max-width:900px){.grid-2{grid-template-columns:1fr;}}
+
+  .card{background:linear-gradient(180deg,var(--surface),var(--surface-2));border:1px solid var(--line);border-radius:14px;padding:20px;position:relative;overflow:hidden;transition:border-color .25s,box-shadow .25s,transform .25s;}
+  .card:hover{border-color:#26407a;box-shadow:0 10px 30px -12px rgba(0,229,255,.18);}
+  .card::before{content:'';position:absolute;top:-40%;right:-20%;width:220px;height:220px;background:radial-gradient(circle,rgba(0,229,255,.14),transparent 70%);pointer-events:none;}
+  .card-title{font-family:'Rajdhani';font-weight:700;font-size:15px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+
+  /* TIMER HUD */
+  .timer-wrap{display:flex;flex-direction:column;align-items:center;gap:18px;padding:10px 0 4px;}
+  .hud{position:relative;width:230px;height:230px;}
+  .hud svg{transform:rotate(-90deg);width:100%;height:100%;}
+  .hud circle{fill:none;stroke-width:10;}
+  .hud .track{stroke:var(--line);}
+  .hud .prog{stroke:url(#hudGrad);stroke-linecap:round;transition:stroke-dashoffset .3s linear;filter:drop-shadow(0 0 6px rgba(77,227,209,.6));}
+  .hud-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
+  .hud-time{font-family:'JetBrains Mono';font-weight:700;font-size:34px;letter-spacing:1px;}
+  .hud-label{font-size:10px;letter-spacing:3px;color:var(--text-dim);text-transform:uppercase;}
+  .hud-status{font-size:11px;color:var(--cyan);letter-spacing:2px;margin-top:6px;text-transform:uppercase;}
+
+  .timer-controls{display:flex;align-items:center;justify-content:center;gap:12px;}
+  .btn{border:none;cursor:pointer;font-family:'Space Grotesk';font-weight:600;font-size:13px;padding:11px 20px;border-radius:8px;letter-spacing:.5px;transition:transform .15s,filter .15s,box-shadow .15s,border-color .15s,color .15s,background .15s;}
+  .btn:active:not(:disabled){transform:scale(.94);}
+  .btn-primary{background:linear-gradient(90deg,var(--cyan),var(--violet));color:#03050c;box-shadow:0 0 0 rgba(0,229,255,0);}
+  .btn-primary:hover{filter:brightness(1.12);transform:translateY(-2px);box-shadow:0 8px 22px -8px rgba(0,229,255,.55);}
+  .btn-ghost{background:var(--surface-2);border:1px solid var(--line);color:var(--text);}
+  .btn-ghost:hover{border-color:var(--cyan);color:var(--cyan);}
+  .btn-danger{background:transparent;border:1px solid var(--danger);color:var(--danger);}
+  .btn-danger:hover{background:rgba(255,84,112,.15);border-color:var(--danger);}
+  .btn:disabled{opacity:.3;cursor:not-allowed;transform:none !important;box-shadow:none !important;}
+  .btn-sm{padding:6px 12px;font-size:11px;border-radius:6px;}
+  .btn-icon{width:46px;height:46px;padding:0;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:18px;line-height:1;flex-shrink:0;box-sizing:border-box;}
+  .btn-icon-main{width:54px;height:54px;font-size:22px;box-shadow:0 0 16px rgba(0,229,255,0.4);}
+
+  /* stat row */
+  .stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:6px;}
+  .stat-box{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;}
+  .stat-box b{display:block;font-family:'JetBrains Mono';font-size:20px;font-weight:700;}
+  .stat-box span{font-size:10px;color:var(--text-dim);letter-spacing:1.5px;text-transform:uppercase;}
+  .c1{color:var(--c1)} .c2{color:var(--c2)} .c3{color:var(--c3)} .c4{color:var(--c4)}
+
+  /* HP bars per course */
+  .course-bar{margin-bottom:14px;}
+  .course-bar:last-child{margin-bottom:0;}
+  .cb-top{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;}
+  .cb-top b{font-weight:600;}
+  .cb-track{height:9px;border-radius:5px;background:var(--surface);border:1px solid var(--line);overflow:hidden;}
+  .cb-fill{height:100%;border-radius:5px;transition:width .4s ease;}
+
+  /* today quest */
+  .quest-item{display:flex;align-items:center;gap:12px;padding:10px 8px;border-radius:9px;transition:.2s;}
+  .quest-item:hover{background:var(--surface);transform:translateX(3px);}
+  .quest-check{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--line);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;background:var(--surface);}
+  .quest-check.done{background:linear-gradient(135deg,var(--cyan),var(--violet));border-color:transparent;color:#03050c;box-shadow:0 0 10px rgba(0,229,255,.6);}
+  .quest-info{flex:1;min-width:0;}
+  .quest-title{font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .quest-title.done{color:var(--text-dim);text-decoration:line-through;}
+  .quest-meta{font-size:10.5px;color:var(--text-dim);margin-top:2px;}
+  .quest-tag{padding:2px 7px;border-radius:5px;font-size:10px;font-weight:700;letter-spacing:.5px;}
+  .quest-link{color:var(--cyan);text-decoration:none;font-size:16px;flex-shrink:0;}
+  .quest-link:hover{color:var(--magenta);}
+  .hist-row{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer;}
+  .hist-row:last-child{border-bottom:none;}
+  .hist-row:hover .hist-title{color:var(--cyan);}
+  .hist-title{font-size:13px;line-height:1.3;}
+  .hist-meta{font-size:10.5px;color:var(--text-dim);margin-top:3px;}
+  .hist-when{font-size:10.5px;color:var(--text-dim);white-space:nowrap;text-align:right;font-family:'JetBrains Mono',monospace;}
+  .empty-note{color:var(--text-dim);font-size:13px;padding:18px 6px;text-align:center;}
+
+  /* LIBRARY */
+  .lib-controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+  .search-input{flex:1;min-width:180px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'Space Grotesk';font-size:13px;}
+  .search-input:focus{outline:none;border-color:var(--cyan);}
+  .chip-select{display:flex;gap:6px;flex-wrap:wrap;}
+  .chip{padding:8px 14px;border-radius:20px;border:1px solid var(--line);background:var(--surface);color:var(--text-dim);font-size:12px;font-weight:600;cursor:pointer;letter-spacing:.5px;transition:.2s;}
+  .chip:hover{transform:translateY(-1px);border-color:var(--cyan);color:var(--text);}
+  .chip.active{color:#08080f;border-color:transparent;}
+  .chip[data-c="all"].active{background:linear-gradient(90deg,var(--cyan),var(--violet));}
+  .chip[data-c="1"].active{background:var(--c1);}
+  .chip[data-c="2"].active{background:var(--c2);}
+  .chip[data-c="3"].active{background:var(--c3);}
+  .chip[data-c="4"].active{background:var(--c4);}
+
+  .chapter-group{margin-bottom:10px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface);}
+  .chapter-head{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer;user-select:none;}
+  .chapter-head:hover{background:var(--surface-2);}
+  .chapter-name{font-family:'Rajdhani';font-weight:700;font-size:14.5px;letter-spacing:.5px;display:flex;align-items:center;gap:10px;}
+  .chapter-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .chapter-progress{font-family:'JetBrains Mono';font-size:11px;color:var(--text-dim);}
+  .chapter-arrow{transition:.2s;color:var(--text-dim);font-size:11px;}
+  .chapter-body{max-height:0;overflow:hidden;transition:max-height .3s ease;background:var(--bg-alt);}
+  .chapter-group.open .chapter-body{max-height:3000px;}
+  .chapter-group.open .chapter-arrow{transform:rotate(180deg);}
+  .video-row{display:flex;align-items:center;gap:12px;padding:9px 16px 9px 20px;border-top:1px solid var(--line);}
+  .video-row .quest-check{width:18px;height:18px;}
+  .video-row .schedule-btn{font-size:14px;color:var(--text-dim);cursor:pointer;background:none;border:none;flex-shrink:0;}
+  .video-row .schedule-btn:hover{color:var(--gold);}
+  .video-row .quest-link{font-size:14px;}
+  .video-title{font-size:13px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .video-title.done{color:var(--text-dim);text-decoration:line-through;}
+.sched-tag{font-size:9.5px;background:var(--surface-2);color:var(--gold);padding:2px 6px;border-radius:5px;flex-shrink:0;}
+
+  .schedule-mode #libraryContainer{outline:3px solid var(--gold);outline-offset:4px;border-radius:16px;box-shadow:0 0 30px rgba(127,223,255,0.4);}
+
+  /* CALENDAR */
+  .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .cal-nav{display:flex;align-items:center;gap:10px;}
+  .cal-month{font-family:'Rajdhani';font-weight:700;font-size:18px;min-width:170px;text-align:center;}
+  .icon-btn{width:32px;height:32px;border-radius:8px;background:var(--surface);border:1px solid var(--line);color:var(--text);cursor:pointer;font-size:14px;}
+  .icon-btn:hover{border-color:var(--cyan);color:var(--cyan);}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+  .cal-dow{text-align:center;font-size:10px;color:var(--text-dim);letter-spacing:1px;padding-bottom:4px;}
+  .cal-cell{aspect-ratio:1;border-radius:10px;background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;position:relative;padding:4px;transition:transform .18s cubic-bezier(.16,1,.3,1), border-color .18s ease, box-shadow .18s ease, background-color .18s ease;will-change:transform;backface-visibility:hidden;}
+  .cal-cell:hover:not(.empty){border-color:var(--cyan);transform:translateY(-2px);box-shadow:0 6px 16px -6px rgba(0,229,255,.45);z-index:5;}
+  .cal-cell *{pointer-events:none;}
+  .cal-cell.empty{background:transparent;border-color:transparent;cursor:default;}
+  .cal-cell.today{border-color:rgba(0,229,255,0.4);background:rgba(8,18,42,0.9);}
+  .cal-cell.selected{border-color:var(--gold);box-shadow:0 0 10px rgba(127,223,255,.4);z-index:4;}
+  .cal-daynum{font-size:11.5px;font-weight:600;width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:50%;line-height:1;margin:1px 0;}
+  .cal-cell.today .cal-daynum{box-shadow:0 0 0 2px var(--cyan);}
+  .cal-heat{width:72%;height:5px;border-radius:3px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden;margin:2px 0;box-sizing:border-box;}
+  .cal-heat-fill{height:100%;border-radius:2px;transition:width .35s ease;background:transparent;}
+  .cal-heat-fill.has{background:linear-gradient(90deg,var(--cyan),var(--magenta));box-shadow:0 0 6px rgba(0,229,255,0.4);}
+  .cal-heat-fill.complete{background:linear-gradient(90deg,#00e5ff,#7fdfff);box-shadow:0 0 8px rgba(0,229,255,0.8);}
+  .cal-dots{display:flex;gap:2px;position:absolute;bottom:5px;}
+  .cal-dots span{width:4px;height:4px;border-radius:50%;}
+  .cal-topics{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;margin-top:2px;max-height:2.4em;overflow:hidden;}
+  .cal-topic{font-size:7px;padding:1px 4px;border-radius:3px;white-space:nowrap;line-height:1.2;}
+
+  .day-detail{margin-top:18px;}
+  .dd-title{font-family:'Rajdhani';font-weight:700;font-size:16px;margin-bottom:10px;}
+  .dd-empty{color:var(--text-dim);font-size:13px;}
+  .dd-item{display:flex;justify-content:space-between;font-size:13px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .dd-item:last-child{border-bottom:none;}
+
+  /* STATS view */
+  .rank-hero{display:flex;align-items:center;gap:20px;padding:24px;background:linear-gradient(135deg,rgba(0,229,255,.12),rgba(59,107,255,.10));border:1px solid var(--line);border-radius:16px;margin-bottom:20px;flex-wrap:wrap;box-shadow:0 0 40px rgba(0,229,255,.08);}
+  .rank-ring{width:90px;height:90px;border-radius:50%;background:conic-gradient(from 0deg,var(--cyan),var(--violet),var(--gold),var(--cyan));display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 22px rgba(0,229,255,.4);}
+  .rank-ring-inner{width:74px;height:74px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-family:'Rajdhani';font-weight:700;font-size:30px;}
+  .rank-info b{font-family:'Rajdhani';font-size:22px;display:block;}
+  .rank-info span{color:var(--text-dim);font-size:12.5px;}
+  .rank-next{margin-top:6px;font-size:11.5px;color:var(--text-dim);}
+  .rank-next b{color:var(--gold);}
+
+  footer{text-align:center;color:var(--text-dim);font-size:11px;padding:30px 0 10px;letter-spacing:1px;}
+
+  .quest-link{background:none;border:none;padding:0;cursor:pointer;font:inherit;}
+
+  .yt-player{
+    display:none;position:fixed;z-index:60;
+    left:auto;right:18px;bottom:18px;top:auto;
+    width:min(560px, calc(100vw - 260px));
+    aspect-ratio:16/9;
+    background:#000;border:1px solid var(--line);border-radius:14px;overflow:hidden;
+    box-shadow:0 18px 40px rgba(0,0,0,.5);
+    isolation:isolate;
+  }
+  .yt-player.on{display:block;animation:theaterIn .38s cubic-bezier(.16,1,.3,1);}
+  body.player-expanded .yt-player{
+    top:0;right:0;bottom:0;left:230px;width:auto;aspect-ratio:auto;height:auto;border-radius:0;border:none;
+  }
+  @media (max-width:640px){
+    .yt-player{right:8px;bottom:8px;width:calc(100vw - 92px);}
+    body.player-expanded .yt-player{left:76px;}
+  }
+  @keyframes theaterIn{from{opacity:0;}to{opacity:1;}}
+  .yt-frame-wrap{position:absolute;inset:0;background:#000;}
+  .yt-frame-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
+  .yt-status{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#8aa4c8;font-size:13px;padding:16px;text-align:center;background:#000;}
+  .locator{width:84px;height:84px;position:relative;}
+  .locator span{position:absolute;inset:0;border:2px solid rgba(0,229,255,.4);border-radius:50%;animation:ping 1.4s ease-out infinite;}
+  .locator span:nth-child(2){animation-delay:.35s;}
+  .locator span:nth-child(3){animation-delay:.7s;}
+  .locator i{position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px;border-radius:50%;background:#00e5ff;box-shadow:0 0 12px #00e5ff;}
+  @keyframes ping{0%{transform:scale(.2);opacity:.9;}100%{transform:scale(1.15);opacity:0;}}
+  .yt-chrome{
+    position:absolute;top:8px;left:8px;z-index:3;
+    display:flex;gap:6px;padding:5px;
+    background:rgba(8,14,28,.82);
+    border:1px solid var(--line);border-radius:10px;
+    pointer-events:auto;cursor:grab;
+  }
+  .yt-chrome:active{cursor:grabbing;}
+  body.player-expanded .yt-chrome{cursor:default;}
+  .yt-drag{position:absolute;top:0;left:0;right:0;height:36px;z-index:2;cursor:grab;}
+  .yt-drag:active{cursor:grabbing;}
+  body.player-expanded .yt-drag,
+  body.player-expanded .yt-resize{display:none;}
+  .yt-resize{position:absolute;width:16px;height:16px;z-index:4;background:transparent;}
+  .yt-resize[data-corner="nw"]{top:0;left:0;cursor:nwse-resize;}
+  .yt-resize[data-corner="ne"]{top:0;right:0;cursor:nesw-resize;}
+  .yt-resize[data-corner="sw"]{bottom:0;left:0;cursor:nesw-resize;}
+  .yt-resize[data-corner="se"]{bottom:0;right:0;cursor:nwse-resize;}
+  .yt-ico{
+    width:28px;height:28px;border:none;border-radius:8px;cursor:pointer;
+    background:transparent;color:var(--text);font-size:14px;line-height:1;
+  }
+  .yt-ico:hover{background:rgba(0,229,255,.16);color:var(--cyan);}
+  .yt-ico-close:hover{background:rgba(255,84,112,.18);color:var(--danger);}
+  body.player-expanded .yt-chrome{top:10px;left:10px;}
+  .yt-frame-wrap{top:0;}
+
+  .side-player{
+    display:none;flex-direction:column;gap:8px;
+    background:linear-gradient(180deg,#0c1730,#07101f);
+    border:1px solid var(--line);border-radius:12px;padding:10px;
+    box-shadow:0 0 18px rgba(0,229,255,.16);
+    transform-origin:top center;
+  }
+  body.player-on .side-player{
+    display:flex;
+    animation:sidePop .45s cubic-bezier(.16,1,.3,1);
+  }
+  @keyframes sidePop{
+    from{opacity:0;transform:translateY(14px) scale(.92);}
+    to{opacity:1;transform:translateY(0) scale(1);}
+  }
+  .side-player-pulse{
+    height:36px;border-radius:8px;overflow:hidden;
+    background:radial-gradient(circle at 30% 50%, rgba(0,229,255,.35), transparent 55%), #07101f;
+    position:relative;
+  }
+  .side-player-pulse::after{
+    content:'';position:absolute;inset:12px 10px;
+    background:repeating-linear-gradient(90deg, transparent 0 4px, rgba(0,229,255,.7) 4px 6px);
+    clip-path:inset(30% 0 30% 0);
+    animation:eq 1s ease-in-out infinite;
+  }
+  @keyframes eq{
+    0%,100%{clip-path:inset(35% 0 35% 0);}
+    50%{clip-path:inset(8% 0 18% 0);}
+  }
+  .side-player-title{font-size:12px;font-weight:600;line-height:1.25;max-height:2.5em;overflow:hidden;}
+  .side-player-sub{font-size:10px;color:var(--text-dim);}
+  .side-player-actions{display:flex;gap:6px;}
+  .side-player-actions button{flex:1;font-size:10px;padding:6px 8px;}
+  @media (max-width:640px){
+    .yt-player{left:76px;}
+    .side-player-title,.side-player-sub,.side-player-actions{display:none;}
+    .side-player{padding:6px;}
+  }
+
+  .gate{
+    position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(ellipse at 50% 0%, #0a1636 0%, #03050c 55%);
+    padding:24px;
+  }
+  .gate.hidden{display:none;}
+  .gate-card{width:min(380px,100%);background:linear-gradient(180deg,var(--surface),var(--surface-2));border:1px solid var(--line);border-radius:22px;padding:26px 24px;box-shadow:0 20px 50px rgba(255,20,40,.12),0 20px 50px rgba(0,0,0,.55);animation:cardSpring .6s cubic-bezier(.16,1,.3,1);}
+  @keyframes cardSpring{from{opacity:0;transform:translateY(40px) scale(.96);}to{opacity:1;transform:none;}}
+  .gate-kicker{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px;}
+  .gate-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:28px;margin-bottom:8px;}
+  .gate-copy{color:var(--text-dim);font-size:13px;line-height:1.45;margin-bottom:16px;}
+  .gate-input{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:20px;letter-spacing:6px;text-align:center;}
+  .gate-input:focus{outline:none;border-color:var(--cyan);}
+  .gate-input:-webkit-autofill,
+  .gate-input:-webkit-autofill:hover,
+  .gate-input:-webkit-autofill:focus{
+    -webkit-text-fill-color:#e7f2ff;
+    caret-color:#00e5ff;
+    transition:background-color 9999s ease-out;
+    box-shadow:0 0 0 1000px #03050c inset;
+    border:1px solid var(--cyan);
+  }
+  .gate-error{color:var(--danger);font-size:12px;min-height:18px;margin-top:8px;text-align:center;}
+  .gate-actions{display:flex;gap:8px;margin-top:12px;}
+  .confirm-overlay{position:fixed;inset:0;z-index:220;display:none;align-items:center;justify-content:center;background:rgba(3,5,12,.72);}
+  .confirm-overlay.on{display:flex;}
+  .confirm-card{width:min(360px,calc(100% - 32px));background:linear-gradient(180deg,var(--surface),var(--surface-2));border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 20px 50px rgba(0,0,0,.55);}
+  .confirm-card p{margin:0 0 16px;font-size:14px;line-height:1.45;}
+  .confirm-actions{display:flex;gap:8px;}
+  .confirm-actions .btn{flex:1;}
+
+  .install-btn{margin-top:8px;width:100%;}
+
+  .account-bar{
+    position:fixed;top:16px;right:18px;z-index:40;
+    display:none;align-items:center;gap:8px;
+  }
+  .account-bar,.account-bar.show{display:none !important;}
+  .account-chip{
+    display:flex;align-items:center;gap:10px;
+    background:linear-gradient(180deg,rgba(14,24,48,.92),rgba(10,17,34,.92));
+    border:1px solid var(--line);border-radius:999px;padding:6px 8px 6px 6px;
+    box-shadow:0 10px 28px rgba(0,0,0,.35),0 0 18px rgba(0,229,255,.12);
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    max-width:min(320px, calc(100vw - 110px));
+  }
+  .account-chip img{width:32px;height:32px;border-radius:50%;background:var(--surface-2);object-fit:cover;flex-shrink:0;}
+  .account-meta{display:flex;flex-direction:column;line-height:1.15;min-width:0;}
+  .account-meta b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;}
+  .account-meta span{font-size:10px;color:var(--text-dim);}
+  .sync-dot{width:7px;height:7px;border-radius:50%;background:var(--text-dim);display:inline-block;margin-right:4px;}
+  .sync-dot.on{background:#22d67a;box-shadow:0 0 8px rgba(34,214,122,.85);}
+  .account-out{
+    border:1px solid var(--line);background:var(--surface-2);color:var(--text-dim);
+    border-radius:999px;padding:8px 12px;font-size:11px;cursor:pointer;
+    font-family:'Space Grotesk',sans-serif;
+  }
+  .account-out:hover{border-color:var(--cyan);color:var(--text);}
+  .oauth-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;}
+  .gate-or{text-align:center;color:var(--text-dim);font-size:11px;letter-spacing:2px;text-transform:uppercase;margin:14px 0 8px;}
+  @media (max-width:640px){
+    .account-bar{top:10px;right:10px;}
+    .account-meta b{max-width:110px;font-size:12px;}
+    .account-out{padding:7px 9px;}
+  }
+  .side-tools{display:flex;flex-direction:column;gap:6px;}
+  .side-tool{background:transparent;border:1px solid var(--line);color:var(--text-dim);border-radius:8px;padding:8px 10px;font-size:11px;cursor:pointer;font-family:'Space Grotesk',sans-serif;text-align:left;}
+  .side-tool:hover{border-color:var(--cyan);color:var(--text);}
+  .side-timer{display:none;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px;text-align:center;}
+  body.player-on:not(.on-dashboard) .side-timer{display:block;}
+  .side-timer-label{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);}
+  .side-timer-time{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:var(--cyan);letter-spacing:.5px;text-shadow:0 0 8px rgba(0,229,255,.45);}
+  .side-timer-status{font-size:10px;color:var(--text-dim);margin-bottom:6px;}
+  .side-timer-actions{display:flex;flex-direction:row;justify-content:center;gap:6px;}
+  .side-ico{
+    width:28px;height:28px;border-radius:8px;border:1px solid var(--line);
+    background:var(--surface-2);color:var(--text);cursor:pointer;font-size:12px;line-height:1;
+  }
+  .side-ico:hover{border-color:var(--cyan);color:var(--cyan);}
+  .side-ico-stop:hover{border-color:var(--danger);color:var(--danger);}
+  .side-ico:disabled{opacity:.35;cursor:not-allowed;}
+
+  .clock-wrap{margin-top:auto;margin-bottom:52px;display:flex;flex-direction:row;align-items:stretch;gap:6px;position:relative;z-index:3;background:rgba(5,10,22,.94);border-radius:12px;padding:4px;}
+  .clock-widget{flex:1;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:7px 8px;font-family:'JetBrains Mono';display:flex;flex-direction:column;gap:1px;box-shadow:0 0 16px -8px rgba(0,229,255,.3);}
+  .clock-time{font-size:13px;font-weight:700;color:var(--cyan);letter-spacing:1px;text-shadow:0 0 8px rgba(0,229,255,.45);}
+  .clock-date{font-size:8.5px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;}
+  @media (max-width:640px){ .clock-widget{padding:6px 4px;align-items:center;} .clock-time{font-size:11px;} .clock-date{display:none;} .settings-pop{right:0;left:auto;} }
+
+  .settings-wrap{position:relative;flex-shrink:0;}
+  .settings-wrap{display:flex;}
+  .gear-btn{
+    width:36px;height:auto;min-height:100%;padding:0;border-radius:10px;border:1px solid var(--line);
+    background:var(--surface);color:var(--text-dim);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;align-self:stretch;
+  }
+  .gear-btn:hover{border-color:var(--cyan);color:var(--text);}
+  .gear-btn svg{width:13px;height:13px;transition:transform .45s cubic-bezier(.16,1,.3,1);}
+  .settings-wrap.open .gear-btn svg{transform:rotate(90deg);}
+  .settings-pop{
+    display:none;position:absolute;right:0;left:auto;bottom:34px;z-index:30;width:168px;
+    background:linear-gradient(180deg,var(--surface),var(--surface-2));
+    border:1px solid var(--line);border-radius:12px;padding:10px;
+    box-shadow:0 12px 28px rgba(0,0,0,.45);
+    animation:sidePop .28s cubic-bezier(.16,1,.3,1);
+  }
+  .settings-wrap.open .settings-pop{display:block;}
+  .settings-user{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .settings-photo{width:28px;height:28px;border-radius:50%;object-fit:cover;background:var(--surface-2);flex-shrink:0;}
+  .settings-name{font-size:12px;font-weight:600;line-height:1.2;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .settings-sync{font-size:11px;color:var(--text-dim);display:flex;align-items:center;gap:6px;}
+
+  .settings-pop .account-out{width:100%;margin-top:6px;border-radius:8px;}
+  #btnAppReset{color:var(--danger);border-color:rgba(255,84,112,.45);}
+  .settings-key-label{display:block;font-size:10px;color:var(--text-dim);margin:8px 0 4px;}
+  .settings-key{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 8px;color:var(--text);font-size:11px;}
+  .sensei-log{display:flex;flex-direction:column;gap:12px;min-height:42vh;max-height:58vh;overflow:auto;padding-right:4px;}
+  .sensei-msg{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--surface);}
+  .sensei-msg.me{border-color:rgba(0,229,255,.35);background:rgba(0,229,255,.06);}
+  .sensei-role{font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px;}
+  .sensei-body{font-size:14px;line-height:1.55;white-space:pre-wrap;}
+  .sensei-body .katex-display{margin:10px 0;}
+  .sensei-form{margin-top:14px;}
+  .sensei-bar{display:flex;align-items:flex-end;gap:8px;padding:8px;border:1px solid var(--line);border-radius:14px;background:var(--surface-2);}
+  .sensei-bar.drag{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(0,229,255,.2);}
+  .sensei-model{max-width:180px;height:36px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:0 8px;font-size:12px;}
+  .sensei-form textarea{flex:1;min-height:40px;max-height:120px;resize:none;background:transparent;border:none;color:var(--text);padding:8px 6px;font-family:'Space Grotesk',sans-serif;font-size:14px;}
+  .sensei-form textarea:focus{outline:none;}
+  .sensei-photo-btn{width:36px;height:36px;border:1px solid var(--line);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--cyan);font-size:18px;background:var(--bg);flex-shrink:0;}
+  .sensei-shots{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+  .sensei-shot{position:relative;width:72px;height:72px;border-radius:8px;overflow:hidden;border:1px solid var(--line);}
+  .sensei-shot img{width:100%;height:100%;object-fit:cover;}
+  .sensei-shot button{position:absolute;top:2px;right:2px;width:18px;height:18px;border:none;border-radius:50%;background:#000a;color:#fff;cursor:pointer;font-size:11px;}
+
+
+
+  /* SCHEDULE MODAL */
+  .modal-overlay{position:fixed;inset:0;background:rgba(3,5,12,0.8);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;pointer-events:none;transition:opacity .25s ease;}
+  .modal-overlay.active{opacity:1;pointer-events:auto;}
+  .modal-card{background:linear-gradient(180deg,var(--surface),var(--surface-2));border:1px solid var(--line);border-radius:16px;padding:22px 24px;max-width:400px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,0.7),0 0 30px rgba(0,229,255,0.15);transform:scale(0.94) translateY(10px);transition:transform .25s cubic-bezier(.16,1,.3,1);position:relative;}
+  .modal-overlay.active .modal-card{transform:scale(1) translateY(0);}
+  .modal-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px;}
+  .modal-title{font-family:'Rajdhani';font-weight:700;font-size:20px;color:var(--text);display:flex;align-items:center;gap:8px;}
+  .modal-sub{font-size:12.5px;color:var(--text-dim);margin-top:2px;line-height:1.35;word-break:break-word;}
+  .modal-close{background:transparent;border:none;color:var(--text-dim);font-size:18px;cursor:pointer;padding:4px;border-radius:6px;line-height:1;transition:.2s;}
+  .modal-close:hover{color:var(--text);background:var(--surface);}
+  .modal-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin:12px 0;}
+  .modal-cal-cell{aspect-ratio:1;border-radius:8px;background:var(--surface);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;cursor:pointer;transition:transform .15s ease, border-color .15s ease, background-color .15s ease, box-shadow .15s ease;user-select:none;color:var(--text);}
+  .modal-cal-cell:hover:not(.empty){border-color:var(--cyan);background:var(--surface-2);transform:translateY(-1.5px);box-shadow:0 4px 12px -4px rgba(0,229,255,0.4);z-index:2;}
+  .modal-cal-cell.empty{background:transparent;border-color:transparent;cursor:default;}
+  .modal-cal-cell.today{border-color:rgba(0,229,255,0.4);background:rgba(8,18,42,0.9);}
+  .modal-cal-cell.today .modal-daynum{background:linear-gradient(135deg,#00b4d8,#2563eb);color:#ffffff;font-weight:700;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 10px rgba(0,180,216,.55),0 0 16px rgba(37,99,235,.4);}
+  .modal-cal-cell.scheduled{border-color:var(--gold);background:rgba(127,223,255,0.12);box-shadow:0 0 10px rgba(127,223,255,0.3);color:var(--gold);}
+  .modal-actions{display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);}
+
+  @media (max-width:480px){
+    .hud{width:180px;height:180px;}
+    .hud-time{font-size:26px;}
+    .page-title{font-size:22px;}
+    .stat-row{grid-template-columns:repeat(3,1fr);gap:8px;}
+    .stat-box{padding:9px 8px;}
+    .stat-box b{font-size:16px;}
+    .rank-hero{padding:16px;gap:14px;}
+    .rank-ring{width:70px;height:70px;}
+    .rank-ring-inner{width:56px;height:56px;font-size:22px;}
+  }
+</style>
+</head>
+<body class="on-dashboard">
+<div class="cursor-dot" id="cursorDot"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+
+<div class="flames" id="flames">
+  <div class="fire-glow" id="fireGlow"></div>
+  <canvas class="fire-layer" id="fireCanvas"></canvas>
+</div>
+<canvas class="ember-layer" id="emberCanvas"></canvas>
+<div class="scanlines"></div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <svg id="brandLogo" width="42" height="42" viewBox="0 0 100 100" style="margin-bottom:6px;filter:drop-shadow(0 0 10px rgba(0,229,255,.5));"></svg>
+      <div class="brand-title">CALC DOJO</div>
+      <div class="brand-kanji kanji-mark">計算道場</div>
+      <div class="brand-sub" id="brandSub">Sign in</div>
+    </div>
+
+    <div class="rank-chip">
+      <div class="rank-badge" id="sideRankBadge">E</div>
+      <div class="rank-text"><b id="sideRankName">Rookie</b><span id="sideRankHours">0.0h forged</span></div>
+    </div>
+
+    <nav class="nav">
+      <div class="nav-label">Path</div>
+      <button class="nav-btn active" data-view="dashboard"><span class="ic">◆</span><span class="label"> Dojo</span></button>
+      <button class="nav-btn" data-view="calendar"><span class="ic">▦</span><span class="label"> Chronicle</span></button>
+      <button class="nav-btn" data-view="library"><span class="ic">▤</span><span class="label"> Archives</span></button>
+      <button class="nav-btn" data-view="stats"><span class="ic">★</span><span class="label"> Mastery</span></button>
+      <button class="nav-btn" data-view="sensei"><span class="ic">✦</span><span class="label"> Sensei</span></button>
+    </nav>
+
+    <div class="side-tools">
+      <button class="side-tool" id="btnInstall" hidden>↓ Install app</button>
+    </div>
+    <div class="side-timer" id="sideTimer" hidden>
+      <div class="side-timer-label">Session</div>
+      <div class="side-timer-time" id="sideTimerTime">00:00:00</div>
+      <div class="side-timer-status" id="sideTimerStatus">standby</div>
+      <div class="side-timer-actions">
+        <button class="side-ico" id="sideStart" title="Start">▶</button>
+        <button class="side-ico side-ico-stop" id="sideStop" title="End session" disabled>■</button>
+        <button class="side-ico" id="sideReset" title="Reset" disabled>↺</button>
+      </div>
+    </div>
+    <div class="clock-wrap">
+      <div class="clock-widget">
+        <div class="clock-time" id="clockTime">--:--:--</div>
+        <div class="clock-date" id="clockDate">—</div>
+      </div>
+      <div class="settings-wrap" id="settingsWrap">
+        <div class="settings-pop" id="settingsPop">
+          <div class="settings-user">
+            <img class="settings-photo" id="settingsPhoto" alt="" hidden>
+            <div>
+              <div class="settings-name" id="settingsName">Not signed in</div>
+              <div class="settings-sync" id="settingsSync"><span class="sync-dot" id="syncDot"></span>local only</div>
+            </div>
+          </div>
+          <button class="account-out" id="btnCloudSignIn" hidden>☁ Sign in</button>
+          <button class="account-out" id="btnCloudSignOut" hidden>Sign out</button>
+          <button class="account-out" id="btnAppReset" type="button">Reset app</button>
+          <label class="settings-key-label">Sensei provider</label>
+          <select class="settings-key" id="senseiProvider">
+            <option value="gemini">Gemini</option>
+            <option value="openrouter">OpenRouter</option>
+            <option value="nvidia">NVIDIA NIM</option>
+          </select>
+          <label class="settings-key-label">API key</label>
+          <input class="settings-key" id="senseiKey" type="password" placeholder="Gemini / OpenRouter / NVIDIA key" autocomplete="off">
+        </div>
+        <button class="gear-btn" id="gearBtn" type="button" aria-label="Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 13a7.8 7.8 0 0 0 .1-2l2-1.2-2-3.4-2.3.6a7.6 7.6 0 0 0-1.7-1L15 4h-4l-.5 2.4a7.6 7.6 0 0 0-1.7 1l-2.3-.6-2 3.4 2 1.2a7.8 7.8 0 0 0 .1 2l-2 1.2 2 3.4 2.3-.6a7.6 7.6 0 0 0 1.7 1L11 20h4l.5-2.4a7.6 7.6 0 0 0 1.7-1l2.3.6 2-3.4-2-1.2Z"/></svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <section class="view active" id="view-dashboard">
+      <div class="page-head">
+        <div>
+          <div class="page-title"><span class="glow" id="dailyPhrase">Loading...</span></div>
+          <div class="page-desc" id="todayDateLabel">—</div>
+        </div>
+      </div>
+
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="card-title">⏱ Session Clock</div>
+          <div class="timer-wrap">
+            <div class="hud">
+              <svg viewBox="0 0 230 230">
+                <defs>
+                  <linearGradient id="hudGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#00e5ff"/>
+                    <stop offset="100%" stop-color="#5b7cff"/>
+                  </linearGradient>
+                </defs>
+                <circle class="track" cx="115" cy="115" r="100"></circle>
+                <circle class="prog" id="hudProg" cx="115" cy="115" r="100" stroke-dasharray="628" stroke-dashoffset="628"></circle>
+              </svg>
+              <div class="hud-center">
+                <div class="hud-time" id="timerDisplay">00:00:00</div>
+                <div class="hud-label">session clock</div>
+                <div class="hud-status" id="timerStatus">standby</div>
+              </div>
+            </div>
+            <div class="timer-controls">
+              <button class="btn btn-primary" id="btnStart">▶ Start</button>
+              <button class="btn btn-danger" id="btnStop" disabled>■ End Session</button>
+              <button class="btn btn-ghost" id="btnReset" disabled>↺ Reset</button>
+            </div>
+            <div class="stat-row">
+              <div class="stat-box"><b id="statToday">0h 0m</b><span>Today</span></div>
+              <div class="stat-box"><b id="statStreak">0</b><span>Day Streak</span></div>
+              <div class="stat-box"><b id="statTotal">0h</b><span>All-Time</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">⚔ Daily Docket — <span id="questCount" style="color:var(--text)">0</span> lectures</div>
+          <div id="questList"></div>
+        </div>
+      </div>
+
+      <div class="grid grid-2" style="margin-top:18px;">
+        <div class="card">
+          <div class="card-title">▶ Last Watched</div>
+          <div id="lastWatchedList"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">✓ Completed</div>
+          <div id="completedList"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CALENDAR -->
+    <section class="view" id="view-calendar">
+      <div class="page-head">
+        <div>
+          <div class="page-title">Chronicle <span class="glow">Log</span></div>
+          <div class="page-desc">Browse the timeline. Witness the arc.</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="cal-head">
+          <div class="cal-nav">
+            <button class="icon-btn" id="calPrev">‹</button>
+            <div class="cal-month" id="calMonthLabel">—</div>
+            <button class="icon-btn" id="calNext">›</button>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="calToday">Today</button>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+        <div class="day-detail" id="dayDetail">
+          <div class="dd-title">Choose a date</div>
+          <div class="dd-empty">Tap a day to reveal its record.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LIBRARY -->
+    <section class="view" id="view-library">
+      <div class="page-head">
+        <div>
+          <div class="page-title">Archives <span class="glow">Vault</span></div>
+          <div class="page-desc">Every Calc 1–4 / Diff Eq lecture. Professor Leonard & Professor V. Mark complete, archive to a date.</div>
+        </div>
+      </div>
+      <div class="lib-controls">
+        <input class="search-input" id="libSearch" placeholder="Search videos or chapters...">
+        <div class="chip-select" id="courseChips">
+          <button class="chip active" data-c="all">All</button>
+          <button class="chip" data-c="1">Calc 1</button>
+          <button class="chip" data-c="2">Calc 2</button>
+          <button class="chip" data-c="3">Calc 3</button>
+          <button class="chip" data-c="4">Calc 4 / DE</button>
+        </div>
+      </div>
+      <div id="libraryContainer"></div>
+    </section>
+
+    <!-- STATS -->
+    <section class="view" id="view-stats">
+      <div class="page-head">
+        <div>
+          <div class="page-title">Mastery <span class="glow">Ledger</span></div>
+          <div class="page-desc">Hours compound. Streaks persist. Mastery accumulates.</div>
+        </div>
+      </div>
+      <div class="rank-hero">
+        <div class="rank-ring"><div class="rank-ring-inner" id="rankBig">E</div></div>
+        <div class="rank-info">
+          <b id="rankNameBig">Rookie</b>
+          <span id="rankHoursBig">0.0 hours logged</span>
+          <div class="rank-next" id="rankNextBig"></div>
+        </div>
+      </div>
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="card-title">◈ Course Completion</div>
+          <div id="courseBars2"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">✦ Overview</div>
+          <div class="stat-row" style="grid-template-columns:1fr 1fr;">
+            <div class="stat-box"><b id="statVideosDone">0</b><span>Videos Done</span></div>
+            <div class="stat-box"><b id="statVideosTotal">0</b><span>Total Videos</span></div>
+            <div class="stat-box"><b id="statSessions">0</b><span>Sessions Logged</span></div>
+            <div class="stat-box"><b id="statBestStreak">0</b><span>Best Streak</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="view-sensei">
+      <div class="page-head">
+        <div>
+          <div class="page-title" id="senseiHello">Sensei <span class="glow">Desk</span></div>
+          <div class="page-desc" id="senseiHelloSub">Ask a calculus question. Answers render as real math.</div>
+        </div>
+      </div>
+      <div class="card">
+        <div id="senseiLog" class="sensei-log">
+          <div class="empty-note">Paste a screenshot of a problem, or type / paste the question below.</div>
+        </div>
+        <form class="sensei-form" id="senseiForm">
+          <div class="sensei-bar" id="senseiBar">
+            <select class="sensei-model" id="senseiModelPick" title="Model"></select>
+            <textarea id="senseiInput" placeholder="Ask, paste a problem, or drop a file here"></textarea>
+            <label class="sensei-photo-btn" title="Upload file">＋
+              <input id="senseiPhoto" type="file" accept="image/*,.pdf,.txt,.md" hidden>
+            </label>
+            <button class="btn btn-primary" id="senseiSend" type="submit">Ask</button>
+          </div>
+          <div class="sensei-shots" id="senseiShots"></div>
+        </form>
+      </div>
+    </section>
+
+  </main>
+
+<!-- SCHEDULE MODAL -->
+<div class="modal-overlay" id="scheduleModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">📅 Archive Selection</div>
+        <div class="modal-sub" id="modalVideoTitle">Select a date</div>
+      </div>
+      <button class="modal-close" id="modalCloseBtn" title="Close">✕</button>
+    </div>
+    <div class="cal-head" style="margin-bottom:8px;">
+      <div class="cal-nav">
+        <button class="icon-btn" id="modalCalPrev">‹</button>
+        <div class="cal-month" id="modalCalMonth" style="min-width:140px;font-size:16px;">—</div>
+        <button class="icon-btn" id="modalCalNext">›</button>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="modalCalToday">Today</button>
+    </div>
+    <div class="modal-cal-grid" id="modalCalGrid"></div>
+    <div class="modal-actions">
+      <button class="btn btn-danger btn-sm" id="modalClearBtn" style="display:none;">✕ Remove Archive</button>
+      <button class="btn btn-ghost btn-sm" id="modalCancelBtn" style="margin-left:auto;">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- DAY DETAIL MODAL -->
+<div class="modal-overlay" id="dayDetailModal">
+  <div class="modal-card" style="max-width:460px;">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="dayModalTitle">📅 Daily Record</div>
+        <div class="modal-sub" id="dayModalHours">0h 0m invested</div>
+      </div>
+      <button class="modal-close" id="dayModalCloseBtn" title="Close">✕</button>
+    </div>
+    <div id="dayModalContent" style="max-height:380px;overflow-y:auto;padding-right:4px;"></div>
+    <div class="modal-actions" style="margin-top:16px;">
+      <button class="btn btn-ghost btn-sm" id="dayModalGoLib">＋ Archive Lectures</button>
+      <button class="btn btn-primary btn-sm" id="dayModalCloseBtn2" style="margin-left:auto;">Done</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="gate" id="appGate">
+  <div class="gate-card">
+    <div class="gate-kicker">Calc Dojo</div>
+    <div class="gate-title" id="gateTitle">Unlock</div>
+    <div class="gate-copy" id="gateCopy">Enter your PIN to open Calc Dojo on this device.</div>
+    <div id="oauthBlock" hidden>
+      <button class="btn btn-primary oauth-btn" id="btnGoogle">Sign in with Google</button>
+      <div class="gate-or" id="gateOr">then pick a name and PIN</div>
+    </div>
+    <input class="gate-input" id="gateName" type="text" maxlength="24" placeholder="What should I call you?" autocomplete="nickname" hidden>
+    <input class="gate-input" id="gatePin" type="password" maxlength="24" placeholder="password" autocomplete="off">
+    <div class="gate-error" id="gateError"></div>
+    <div class="gate-actions">
+      <button class="btn btn-primary" id="gateSubmit" style="flex:1;">Enter</button>
+    </div>
+  </div>
+</div>
+
+<div class="yt-player" id="ytPlayer">
+  <div class="yt-drag" id="ytDrag" title="Drag"></div>
+  <div class="yt-resize" data-corner="nw"></div>
+  <div class="yt-resize" data-corner="ne"></div>
+  <div class="yt-resize" data-corner="sw"></div>
+  <div class="yt-resize" data-corner="se"></div>
+  <div class="yt-chrome" title="">
+    <button class="yt-ico" id="ytExpand" title="Expand">⛶</button>
+    <button class="yt-ico yt-ico-close" id="ytClose" title="Close">✕</button>
+  </div>
+  <div class="yt-player-title" id="ytTitle" hidden>Lecture</div>
+  <div class="yt-player-sub" id="ytSub" hidden>Now playing</div>
+  <div class="yt-frame-wrap">
+    <div class="yt-status" id="ytStatus"><div class="locator" aria-hidden="true"><span></span><span></span><span></span><i></i></div><div id="ytStatusText">Locating lecture…</div></div>
+    <iframe id="ytFrame" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen hidden></iframe>
+  </div>
+</div>
+<div class="confirm-overlay" id="resetConfirm">
+  <div class="confirm-card">
+    <p>Are you sure you want to reset the app?</p>
+    <div class="confirm-actions">
+      <button class="btn btn-danger" id="resetYes">Yes</button>
+      <button class="btn btn-ghost" id="resetNo">No</button>
+    </div>
+  </div>
+</div>
+<footer>集中 — focus, one video at a time. Progress saves automatically.</footer>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="cloud.js"></script>
+<script>
+(function(){
+
+/* ---------------- VIDEO DATA ---------------- */
+// format per line: course|chapter|title|channel
+const RAW = `
+1|Precalc Review|Lines, Angle of Inclination, and the Distance Formula|Leonard
+1|Precalc Review|Introduction to Functions|Leonard
+1|Precalc Review|Review of Trigonometry and Graphing Trig Functions|Leonard
+1|Precalc Review|Combining and Composition of Functions|Leonard
+1|Precalc Review|Essential Algebra & Trig Review Before Calculus 1|Professor V
+1|Limits|An Introduction to Limits|Leonard
+1|Limits|Properties of Limits. Techniques of Limit Computation|Leonard
+1|Limits|The Tangent and Velocity Problems (Video 1)|Professor V
+1|Limits|The Tangent & Velocity Problems - Beginning Your Calculus Journey|Professor V
+1|Limits|The Limit of a Function (Video 2)|Professor V
+1|Limits|The Limit of a Function - Solving HW Exercises Part 1 (2.2)|Professor V
+1|Limits|Calculating Limits Using the Limit Laws (Video 3)|Professor V
+1|Limits|Infinite Limits|Professor V
+1|Limits|Finding Limits of Functions with Absolute Value|Professor V
+1|Limits|The Precise Definition of a Limit (Video 4)|Professor V
+1|Limits|How to Use the Squeeze Theorem for Limits|Professor V
+1|Limits|Most Calculus Students Get This Limit Wrong|Professor V
+1|Limits|Continuity of Functions|Leonard
+1|Limits|Continuity and the Intermediate Value Theorem (Video 5)|Professor V
+1|Limits|Continuity & Piecewise Functions|Professor V
+1|Limits|One-Sided Continuity (from the Left & Right)|Professor V
+1|Limits|Limits of Functions at Infinity|Leonard
+1|Limits|Limits at Infinity - Horizontal Asymptotes (Video 6)|Professor V
+1|Limits|How to Solve Trig Limits (Common Exam Problems Explained)|Professor V
+1|Derivatives & Differentiation Rules|Slope of a Curve, Velocity, and Rates of Change|Leonard
+1|Derivatives & Differentiation Rules|An Introduction to the Derivative of a Function|Leonard
+1|Derivatives & Differentiation Rules|Derivatives and Rates of Change (Video 7)|Professor V
+1|Derivatives & Differentiation Rules|The Derivative as a Function (Video 8)|Professor V
+1|Derivatives & Differentiation Rules|Finding Slopes of Tangent Lines Using the Limit Definition|Professor V
+1|Derivatives & Differentiation Rules|How to Graph f'(x) Using the Graph of f(x)|Professor V
+1|Derivatives & Differentiation Rules|Techniques of Differentiation|Leonard
+1|Derivatives & Differentiation Rules|Differentiation Rules (Video 9)|Professor V
+1|Derivatives & Differentiation Rules|The Product and Quotient Rules for Derivatives|Leonard
+1|Derivatives & Differentiation Rules|The Product and Quotient Rules (Video 10)|Professor V
+1|Derivatives & Differentiation Rules|Finding Derivatives of Trigonometric Functions|Leonard
+1|Derivatives & Differentiation Rules|Trig Limit & Continuity Problem: Find k so f(x) is continuous|Professor V
+1|Derivatives & Differentiation Rules|Derivatives of Trigonometric Functions (Video 11)|Professor V
+1|Derivatives & Differentiation Rules|Finding Limits of Trigonometric Functions|Professor V
+1|Derivatives & Differentiation Rules|Discussion of the Chain Rule|Leonard
+1|Derivatives & Differentiation Rules|The Chain Rule (Video 12)|Professor V
+1|Derivatives & Differentiation Rules|The Chain Rule|Professor V
+1|Derivatives & Differentiation Rules|Master the CHAIN RULE in Under 7 Minutes|Professor V
+1|Derivatives & Differentiation Rules|The Chain Rule: Best Explanation|Professor V
+1|Derivatives & Differentiation Rules|Differentiation Examples Using Product, Quotient, and Chain Rules|Professor V
+1|Derivatives & Differentiation Rules|Chain Rule Mistakes That Will Cost You Points on Exams|Professor V
+1|Derivatives & Differentiation Rules|Implicit Differentiation|Leonard
+1|Derivatives & Differentiation Rules|Implicit Differentiation (Video 13)|Professor V
+1|Derivatives & Differentiation Rules|Implicit Differentiation Demystified|Professor V
+1|Derivatives & Differentiation Rules|Derivatives of Inverse Trig Functions|Professor V
+1|Derivatives & Differentiation Rules|Derivatives of Logarithmic Functions (Video 14)|Professor V
+1|Derivatives & Differentiation Rules|Logarithmic Differentiation|Professor V
+1|Derivatives & Differentiation Rules|Logarithmic Differentiation (AP Calc & Calc 1)|Professor V
+1|Derivatives & Differentiation Rules|Hyperbolic Functions (Video 19)|Professor V
+1|Applications of Differentiation|Applications of the Derivative|Leonard
+1|Applications of Differentiation|Rates of Change in the Sciences - Particle Motion (Video 15)|Professor V
+1|Applications of Differentiation|Particle Motion & Graphs|Professor V
+1|Applications of Differentiation|Velocity & Acceleration (Particle Motion)|Professor V
+1|Applications of Differentiation|Exponential Growth and Decay - Newton's Law of Cooling (Video 16)|Professor V
+1|Applications of Differentiation|Related Rates|Leonard
+1|Applications of Differentiation|Related Rates (Video 17)|Professor V
+1|Applications of Differentiation|Related Rates Problems Made Clear & Easy|Professor V
+1|Applications of Differentiation|How to Set Up & Solve Related Rates Problems|Professor V
+1|Applications of Differentiation|Related Rates Examples|Professor V
+1|Applications of Differentiation|Linear Approximations and Differentials (Video 18)|Professor V
+1|Applications of Differentiation|Maximum & Minimum Values Part 1 (4.1)|Professor V
+1|Applications of Differentiation|Maximum and Minimum Values Part 2 (4.1)|Professor V
+1|Applications of Differentiation|Maximum & Minimum Values, Extreme Value Theorem, & More|Professor V
+1|Applications of Differentiation|Increasing/Decreasing and Concavity of Functions|Leonard
+1|Applications of Differentiation|A Brief Discussion of Rolle's Theorem and Mean-Value Theorem|Leonard
+1|Applications of Differentiation|The Mean Value Theorem (4.2)|Professor V
+1|Applications of Differentiation|The Mean Value Theorem & Rolle's Theorem|Professor V
+1|Applications of Differentiation|The First Derivative Test for Increasing and Decreasing|Leonard
+1|Applications of Differentiation|The Second Derivative Test for Concavity of Functions|Leonard
+1|Applications of Differentiation|How Derivatives Affect the Shape of a Graph (4.3)|Professor V
+1|Applications of Differentiation|Indeterminate Forms Explained (When L'Hopital's Rule Actually Works)|Professor V
+1|Applications of Differentiation|L'Hospital's Rule (4.4)|Professor V
+1|Applications of Differentiation|L'Hospital's Rule - When to Use It? How?|Professor V
+1|Applications of Differentiation|Most Calculus Students Use L'Hopital's Rule Here... But They Shouldn't|Professor V
+1|Applications of Differentiation|How to Sketch Graphs of Functions|Leonard
+1|Applications of Differentiation|Summary of Curve Sketching (4.5)|Professor V
+1|Applications of Differentiation|Finding and Simplifying f' and f''|Professor V
+1|Applications of Differentiation|Curve Sketching Examples - Spicy Radical Functions|Professor V
+1|Applications of Differentiation|Curve Sketching Rational Functions, Holes & Oblique Asymptotes|Professor V
+1|Applications of Differentiation|Curve Sketching with a Radical Function: y = x-3x^(1/3)|Professor V
+1|Applications of Differentiation|Curve Sketching Continued - Exponential, Trig, & Log Functions|Professor V
+1|Applications of Differentiation|How to Sketch Graphs in Calculus FAST|Professor V
+1|Applications of Differentiation|Optimization; Max/Min Application Problems|Leonard
+1|Applications of Differentiation|Optimization Problems (4.7)|Professor V
+1|Applications of Differentiation|Optimization Example with Larry the Lifeguard|Professor V
+1|Applications of Differentiation|The Trick to Optimization - 3 Classic Examples|Professor V
+1|Applications of Differentiation|Newton's Method (4.8)|Professor V
+1|Applications of Differentiation|Antiderivatives (4.9)|Professor V
+1|Integrals|An Introduction to the Indefinite Integral|Leonard
+1|Integrals|Area Under a Curve, Limit Approach, Riemann Sums|Leonard
+1|Integrals|Areas and Distances (5.1)|Professor V
+1|Integrals|Review of Sigma Notation|Professor V
+1|Integrals|The Definite Integral (5.2)|Professor V
+1|Integrals|Using Riemann Sums to Evaluate Definite Integrals|Professor V
+1|Integrals|The Limit Definition of the Definite Integral Using a Riemann Sum|Professor V
+1|Integrals|Comparison Properties of the Integral|Professor V
+1|Integrals|The Evaluation of Definite Integrals|Leonard
+1|Integrals|The Fundamental Theorem of Calculus|Leonard
+1|Integrals|The Fundamental Theorem of Calculus (5.3)|Professor V
+1|Integrals|Indefinite Integrals and the Net Change Theorem (5.4)|Professor V
+1|Integrals|Evaluating Integrals with Absolute Value|Professor V
+1|Integrals|Integration by Substitution|Leonard
+1|Integrals|The Substitution Rule (5.5)|Professor V
+1|Integrals|Integration Using U-Substitution|Professor V
+1|Applications of Integration|Finding Area Between Two Curves|Leonard
+1|Applications of Integration|Areas Between Curves (6.1)|Professor V
+1|Applications of Integration|Volume of Solids By Disks and Washers Method|Leonard
+1|Applications of Integration|Volumes Using Disks & Washers (6.2)|Professor V
+1|Applications of Integration|Volumes by Slicing: Disks & Washers - Foolproof Easy Method|Professor V
+1|Applications of Integration|Volumes of Solids of Revolution Using Discs & Washers|Professor V
+1|Applications of Integration|Volume of Solids By Cylindrical Shells Method|Leonard
+1|Applications of Integration|Volumes by Cylindrical Shells (6.3)|Professor V
+1|Applications of Integration|Shell Method for Volumes of Solids of Revolution|Professor V
+1|Applications of Integration|Volume by Cross Sections|Professor V
+1|Applications of Integration|Work (6.4)|Professor V
+1|Applications of Integration|Finding Work When Pumping Liquids Out of Containers|Professor V
+1|Applications of Integration|Average Value of a Function (6.5)|Professor V
+1|Applications of Integration|Finding the Length of a Curve on a Plane|Leonard
+1|Exam Reviews|Final Exam Review Part 3 (with audio)|Professor V
+1|Exam Reviews|Solving Exam 1 - Limits, Continuity, Derivatives, Rates of Change|Professor V
+1|Exam Reviews|Final Exam Review Part 1 - Behind the Scenes|Professor V
+1|Exam Reviews|Final Exam Review Part 2 - Behind the Scenes|Professor V
+1|Exam Reviews|How to Solve AP Calculus AB Area & Volume FRQs|Professor V
+2|Inverse Functions, Logs & Exponentials|The Natural Log Function|Leonard
+2|Inverse Functions, Logs & Exponentials|Derivatives of Inverse Functions|Leonard
+2|Inverse Functions, Logs & Exponentials|Derivatives and Integrals of Exponential Functions|Leonard
+2|Inverse Functions, Logs & Exponentials|Derivatives and Integrals of General Exponential Functions|Leonard
+2|Inverse Functions, Logs & Exponentials|Calculus of Inverse Trigonometric Functions|Leonard
+2|Inverse Functions, Logs & Exponentials|A Discussion of Hyperbolic Functions|Leonard
+2|Inverse Functions, Logs & Exponentials|Evaluating Limits of Indeterminate Forms|Leonard
+2|Techniques of Integration|Integration By Parts|Leonard
+2|Techniques of Integration|Integration by Parts (Video 1)|Professor V
+2|Techniques of Integration|Evaluating Integrals Using Integration by Parts|Professor V
+2|Techniques of Integration|Mastering Integration by Parts: When & How to Use It|Professor V
+2|Techniques of Integration|Tabular aka DI Method for Integration by Parts|Professor V
+2|Techniques of Integration|Can You Use U-Sub Instead of Integration by Parts Sometimes?|Professor V
+2|Techniques of Integration|When to Use U-Sub or Integration by Parts?|Professor V
+2|Techniques of Integration|Integration by Parts - Tabular Method|Professor V
+2|Techniques of Integration|How to Remember Integration by Parts (Without Memorizing the Formula)|Professor V
+2|Techniques of Integration|The Easiest Way to Choose u and dv in Integration by Parts|Professor V
+2|Techniques of Integration|Techniques For Trigonometric Integrals|Leonard
+2|Techniques of Integration|Trigonometric Integrals (Video 2)|Professor V
+2|Techniques of Integration|Evaluating Trigonometric Integrals|Professor V
+2|Techniques of Integration|Integrals By Trigonometric Substitution|Leonard
+2|Techniques of Integration|Trigonometric Substitution (Video 3)|Professor V
+2|Techniques of Integration|Mastering TRIG SUB for Integration|Professor V
+2|Techniques of Integration|Evaluating Integrals Using Trigonometric Substitution|Professor V
+2|Techniques of Integration|Integration Using Trigonometric Substitution|Professor V
+2|Techniques of Integration|Changing Limits of Integration for U-Sub vs Trig Sub|Professor V
+2|Techniques of Integration|Integration By Partial Fractions|Leonard
+2|Techniques of Integration|Partial Fraction Decomposition|Professor V
+2|Techniques of Integration|Integration of Rational Functions by Partial Fractions (Video 4)|Professor V
+2|Techniques of Integration|Evaluating Integrals Using Partial Fractions|Professor V
+2|Techniques of Integration|Mastering Rational Function Integrals: When Long Division Comes First|Professor V
+2|Techniques of Integration|Strategy for Integration (Video 5)|Professor V
+2|Techniques of Integration|Integration Techniques You MUST Know for Your Calc 2 Final|Professor V
+2|Techniques of Integration|Approximate Integration - Midpoint, Trapezoidal & Simpson's Rule|Professor V
+2|Techniques of Integration|Calc 2 Review: Integration Techniques + Approx Rules|Professor V
+2|Techniques of Integration|How to Find K for Error Bounds (Simpson's, Midpoint & Trapezoidal)|Professor V
+2|Techniques of Integration|Numerical Integration With Trapezoidal and Simpson's Rule|Leonard
+2|Techniques of Integration|Improper Integrals|Leonard
+2|Techniques of Integration|Improper Integrals (Video 7)|Professor V
+2|Techniques of Integration|Evaluating Improper Integrals (Part 2)|Professor V
+2|Techniques of Integration|Improper Integrals - What Are They? How to Evaluate Them?|Professor V
+2|Techniques of Integration|The Comparison Theorem for Improper Integrals|Professor V
+2|Techniques of Integration|How to Evaluate Improper Integrals (Infinite Limits & Undefined Functions)|Professor V
+2|Techniques of Integration|Improper Integrals (Must-Know Problems for Your Calc 2 Final)|Professor V
+2|Further Applications of Integration|Arc Length (Video 8)|Professor V
+2|Further Applications of Integration|Area of a Surface of Revolution (Video 9)|Professor V
+2|Further Applications of Integration|Area of a Surface of Revolution - Easy Set-up Method|Professor V
+2|Further Applications of Integration|Moments and Center of Mass (Video 10)|Professor V
+2|Intro Differential Equations|Solving First Order Differential Equations By Separation of Variables|Leonard
+2|Intro Differential Equations|Modeling with Differential Equations (Video 11)|Professor V
+2|Intro Differential Equations|Separable Differential Equations (Video 12)|Professor V
+2|Intro Differential Equations|Linear Differential Equations (Video 14)|Professor V
+2|Intro Differential Equations|Calc 2 Final Review: Linear & Separable Differential Equations|Professor V
+2|Sequences and Series|Convergence and Divergence of Sequences|Leonard
+2|Sequences and Series|Sequences (11.1)|Professor V
+2|Sequences and Series|Monotonic and Bounded Sequences|Professor V
+2|Sequences and Series|The Ratio Test for Sequences|Professor V
+2|Sequences and Series|Infinite Sequences - Convergent or Divergent?|Professor V
+2|Sequences and Series|Infinite Sequences Part 2 - Convergent or Divergent?|Professor V
+2|Sequences and Series|Series, Geometric Series, Harmonic Series, and Divergence Test|Leonard
+2|Sequences and Series|Series (11.2)|Professor V
+2|Sequences and Series|Review of Sigma Notation (Calc 2)|Professor V
+2|Sequences and Series|Telescoping Series/Telescoping Sums|Professor V
+2|Sequences and Series|Using the Integral Test for Convergence/Divergence, P-Series|Leonard
+2|Sequences and Series|The Integral Test (11.3)|Professor V
+2|Sequences and Series|The Integral Test for Infinite Series|Professor V
+2|Sequences and Series|The Comparison Test for Series and The Limit Comparison Test|Leonard
+2|Sequences and Series|Comparison Tests (11.4)|Professor V
+2|Sequences and Series|The Comparison and Limit Comparison Tests (Part 2)|Professor V
+2|Sequences and Series|The Limit Comparison Test: How & When to Use It|Professor V
+2|Sequences and Series|Showing Convergence With the Alternating Series Test, Finding Error of Sums|Leonard
+2|Sequences and Series|Alternating Series (11.5)|Professor V
+2|Sequences and Series|Factorials! What Are They? How to Simplify?|Professor V
+2|Sequences and Series|Absolute Convergence, Ratio Test and Root Test For Series|Leonard
+2|Sequences and Series|Absolute Convergence and the Ratio and Root Tests (11.6)|Professor V
+2|Sequences and Series|The Ratio Test - Part 2|Professor V
+2|Sequences and Series|The Root Test Part 2|Professor V
+2|Sequences and Series|Testing for Absolute & Conditional Convergence|Professor V
+2|Sequences and Series|Stop Mixing These Up! Absolute vs Conditional Convergence|Professor V
+2|Sequences and Series|The Ratio and Root Tests for Infinite Series|Professor V
+2|Sequences and Series|Strategy for Testing Series (11.7)|Professor V
+2|Sequences and Series|Strategy for Testing Series - Solving Problems|Professor V
+2|Sequences and Series|Series Test Strategy (Calc 2 / AP Calc BC)|Professor V
+2|Sequences and Series|Power Series, Calculus of Power Series, Ratio Test for Int. of Convergence|Leonard
+2|Sequences and Series|Power Series (11.8)|Professor V
+2|Sequences and Series|Finding the Radius & Interval of Convergence for Power Series|Professor V
+2|Sequences and Series|Representation of Functions by Taylor Series and Maclaurin Series|Leonard
+2|Sequences and Series|Representations of Functions as Power Series Part 1 (11.9)|Professor V
+2|Sequences and Series|Differentiation and Integration of Power Series Part 2 (11.9)|Professor V
+2|Sequences and Series|Power Series - Made Easy!|Professor V
+2|Sequences and Series|Approximation of Functions by Taylor Polynomials|Leonard
+2|Sequences and Series|Taylor and Maclaurin Series (Part 1)|Professor V
+2|Sequences and Series|Taylor & Maclaurin Series Part 2/Binomial Series (11.10)|Professor V
+2|Sequences and Series|Finding Taylor and Maclaurin Series for Functions|Professor V
+2|Sequences and Series|Using Series to Evaluate Limits|Professor V
+2|Sequences and Series|Applications of Taylor Polynomials (11.11)|Professor V
+2|Sequences and Series|Approximating Error for Taylor Polynomials - Taylor's Inequality|Professor V
+2|Sequences and Series|Solving 100 Questions on Sequences & Series - Part 1|Professor V
+2|Sequences and Series|Solving 100 Questions on Sequences & Series - Part 2|Professor V
+2|Parametric, Polar & Conics|Conic Sections/The Parabola (10.1 & 10.2)|Professor V
+2|Parametric, Polar & Conics|The Ellipse (10.3)|Professor V
+2|Parametric, Polar & Conics|The Hyperbola (10.4)|Professor V
+2|Parametric, Polar & Conics|Introduction to Parametric Equations|Leonard
+2|Parametric, Polar & Conics|Curves Defined by Parametric Equations (Video 28)|Professor V
+2|Parametric, Polar & Conics|Calculus of Parametric Equations|Leonard
+2|Parametric, Polar & Conics|Calculus with Parametric Curves (Video 29)|Professor V
+2|Parametric, Polar & Conics|Calculus with Parametric Curves - Arc Length, Area, Surface Area, and More|Professor V
+2|Parametric, Polar & Conics|Calculus with Parametric Curves - Derivatives, Tangent Lines, Arc Length & Surface Area|Professor V
+2|Parametric, Polar & Conics|Finding Horizontal & Vertical Tangents to Parametric & Polar Curves|Professor V
+2|Parametric, Polar & Conics|Using Polar Coordinates and Polar Equations|Leonard
+2|Parametric, Polar & Conics|Polar Coordinates (Video 30)|Professor V
+2|Parametric, Polar & Conics|Calculus of Polar Equations|Leonard
+2|Parametric, Polar & Conics|Areas and Lengths in Polar Coordinates (Video 31)|Professor V
+2|Parametric, Polar & Conics|Graphing Roses in Polar Coordinates & Finding Area of Petals|Professor V
+2|Parametric, Polar & Conics|Finding Areas for Polar Curves|Professor V
+2|Parametric, Polar & Conics|Conic Sections in Polar Coordinates (10.6)|Professor V
+2|Exam Reviews|Calculus 2 Final Exam Review Part 1|Professor V
+2|Exam Reviews|Calculus 2 Final Exam Review Part 2|Professor V
+2|Exam Reviews|Calculus 2 Final Exam Review Part 3|Professor V
+2|Exam Reviews|Calculus 2 Final Exam Review Sequences & Series Part 4|Professor V
+2|Exam Reviews|Solving Exam 1 - Areas, Volumes, Integrals & More|Professor V
+2|Exam Reviews|Solving Exam 2 - Integrals, Arc Length, Surface Area & More|Professor V
+2|Exam Reviews|Solving the FINAL EXAM Spring 2024|Professor V
+3|Vectors and Geometry of Space|An Introduction to Vectors|Leonard
+3|Vectors and Geometry of Space|Three-Dimensional Coordinate Systems (Video 1)|Professor V
+3|Vectors and Geometry of Space|Vectors (Video 2)|Professor V
+3|Vectors and Geometry of Space|Vectors in 3-D Coordinate System|Leonard
+3|Vectors and Geometry of Space|Using the Dot Product|Leonard
+3|Vectors and Geometry of Space|The Dot Product (Video 3)|Professor V
+3|Vectors and Geometry of Space|Finally Understand Vector, Scalar, and Orthogonal Projections|Professor V
+3|Vectors and Geometry of Space|The Cross Product|Leonard
+3|Vectors and Geometry of Space|The Cross Product (Video 4)|Professor V
+3|Vectors and Geometry of Space|Lines and Planes in 3-D|Leonard
+3|Vectors and Geometry of Space|Equations of Lines and Planes (Video 5)|Professor V
+3|Vectors and Geometry of Space|Finding Equations of Lines, Planes & Distances in 3-Space|Professor V
+3|Vectors and Geometry of Space|How to Find the Distance from a Point to a Plane|Professor V
+3|Vectors and Geometry of Space|How to Find the Distance from a Point to a Line Using Vector Projection|Professor V
+3|Vectors and Geometry of Space|Cylinders and Surfaces in 3-D|Leonard
+3|Vectors and Geometry of Space|Cylinders and Quadric Surfaces (Video 6)|Professor V
+3|Vectors and Geometry of Space|Using Cylindrical and Spherical Coordinates|Leonard
+3|Vector Functions|An Introduction to Vector Functions|Leonard
+3|Vector Functions|Vector Functions and Space Curves (Video 7)|Professor V
+3|Vector Functions|Derivatives and Integrals of Vector Functions|Leonard
+3|Vector Functions|Derivatives & Integrals of Vector Functions (Video 8)|Professor V
+3|Vector Functions|Arc Length/Parameterization, TNB (Frenet-Serret) Intro|Leonard
+3|Vector Functions|TNB Frames, Curvature, Torsion, Encapsulation|Leonard
+3|Vector Functions|Arc Length and Curvature (Video 9)|Professor V
+3|Vector Functions|How to Find Arc Length and Curvature (With Worked Examples)|Professor V
+3|Vector Functions|How to Find the Unit Tangent, Normal, and Binormal Vectors|Professor V
+3|Vector Functions|Velocity and Acceleration of Vector Functions|Leonard
+3|Vector Functions|Motion in Space: Velocity and Acceleration (Video 10)|Professor V
+3|Partial Derivatives|Intro to Multivariable Functions (Domain, Sketching, Level Curves)|Leonard
+3|Partial Derivatives|Functions of Several Variables (Video 11)|Professor V
+3|Partial Derivatives|Limits and Continuity of Multivariable Functions (Squeeze Th.)|Leonard
+3|Partial Derivatives|Limits and Continuity (Video 12)|Professor V
+3|Partial Derivatives|Stop Struggling with Multivariable Limits|Professor V
+3|Partial Derivatives|Partial Derivatives (Derivatives of Multivariable Functions)|Leonard
+3|Partial Derivatives|Partial Derivatives (Video 13)|Professor V
+3|Partial Derivatives|Multivariable Differentiation Shortcuts|Professor V
+3|Partial Derivatives|Finding Differentials of Multivariable Functions|Leonard
+3|Partial Derivatives|Tangent Planes and Linear Approximation (Video 14)|Professor V
+3|Partial Derivatives|The Chain Rule for Multivariable Functions|Leonard
+3|Partial Derivatives|The Chain Rule (Video 15)|Professor V
+3|Partial Derivatives|Finding Directional Derivatives and Gradients|Leonard
+3|Partial Derivatives|Directional Derivatives and the Gradient Vector (Video 16)|Professor V
+3|Partial Derivatives|What Is the Gradient?|Professor V
+3|Partial Derivatives|Finding Tangent Planes and Normal Lines to Surfaces|Leonard
+3|Partial Derivatives|Finding Extrema of Functions of 2 Variables (Max and Min)|Leonard
+3|Partial Derivatives|Maximum and Minimum Values (Video 17)|Professor V
+3|Partial Derivatives|Finding Local Extrema in 3D - D-Test Tips|Professor V
+3|Partial Derivatives|Finding Absolute Extrema on Closed Regions (3D)|Professor V
+3|Partial Derivatives|Constrained Optimization with Lagrange Multipliers|Leonard
+3|Partial Derivatives|Lagrange Multipliers (Video 18)|Professor V
+3|Partial Derivatives|Why Lagrange Multipliers Work|Professor V
+3|Partial Derivatives|Two Ways to Tame a Curve of Intersection|Professor V
+3|Multiple Integrals|Introduction to Double Integrals (Background Info)|Leonard
+3|Multiple Integrals|Double Integrals Over Rectangles (Video 19)|Professor V
+3|Multiple Integrals|How to Solve Double/Repeated/Iterated Integrals|Leonard
+3|Multiple Integrals|Double Integrals Over General Regions (Video 20)|Professor V
+3|Multiple Integrals|How to Set Up Double Integrals|Professor V
+3|Multiple Integrals|Reversing the Order of Integration|Professor V
+3|Multiple Integrals|Reverse Order of Integration (Final Exam Must-Know)|Professor V
+3|Multiple Integrals|Finding Volumes Using Double Integrals|Professor V
+3|Multiple Integrals|Precalculus: Polar Coordinates (9.1)|Professor V
+3|Multiple Integrals|Polar Equations & Graphs|Professor V
+3|Multiple Integrals|Double Integrals over Polar Regions|Leonard
+3|Multiple Integrals|Double Integrals in Polar Coordinates (Video 21)|Professor V
+3|Multiple Integrals|Double Integrals in Polar Regions Part 2|Professor V
+3|Multiple Integrals|Center of Mass (Moments of Mass and Inertia) for Lamina in 2-D|Leonard
+3|Multiple Integrals|Surface Area (Video 22)|Professor V
+3|Multiple Integrals|How to Solve TRIPLE INTEGRALS (Center of Mass and Volume)|Leonard
+3|Multiple Integrals|Triple Integrals (Video 23)|Professor V
+3|Multiple Integrals|TRIPLE Integrals Over Regions with CYLINDRICAL or SPHERICAL Coord.|Leonard
+3|Multiple Integrals|Triple Integrals in Cylindrical Coordinates (Video 24)|Professor V
+3|Multiple Integrals|Triple Integrals & Cylindrical Coordinates - Step-by-Step Volume Examples|Professor V
+3|Multiple Integrals|Stop Using Rectangular Coordinates! Triple Integrals with Cylindrical|Professor V
+3|Multiple Integrals|Triple Integrals in Spherical Coordinates (Video 25)|Professor V
+3|Multiple Integrals|How to Change Variables in Multiple Integrals (Using the Jacobian)|Leonard
+3|Multiple Integrals|Change of Variables in Multiple Integrals - The Jacobian (Video 26)|Professor V
+3|Vector Calculus|Introduction to Vector Fields (and what makes them Conservative)|Leonard
+3|Vector Calculus|Vector Fields (Video 27)|Professor V
+3|Vector Calculus|How to Find Divergence and Curl of Vector Fields|Leonard
+3|Vector Calculus|Curl and Divergence (Video 31)|Professor V
+3|Vector Calculus|How to Compute Line Integrals (Over Non-Conservative V.Fields)|Leonard
+3|Vector Calculus|Line Integrals (Video 28)|Professor V
+3|Vector Calculus|Line Integrals on CONSERVATIVE Vector Fields (Independence of Path)|Leonard
+3|Vector Calculus|The Fundamental Theorem for Line Integrals (Video 29)|Professor V
+3|Vector Calculus|Green's Theorem|Leonard
+3|Vector Calculus|Green's Theorem (Video 30)|Professor V
+3|Vector Calculus|Surface And Flux Integrals, Parametric Surf., Divergence/Stoke's Theorem|Leonard
+3|Vector Calculus|Parametric Surfaces and Their Areas (Video 32)|Professor V
+3|Vector Calculus|Surface Integrals (Video 33)|Professor V
+3|Vector Calculus|Stokes' Theorem (Video 34)|Professor V
+3|Vector Calculus|The Divergence Theorem (Video 35)|Professor V
+3|Vector Calculus|Applications of Vector Calculus|Professor V
+3|Exam Reviews|Calculus 3 Exam 1 Review|Professor V
+3|Exam Reviews|Calculus 3 Exam 1 Review (Summarized Solutions)|Professor V
+3|Exam Reviews|Calculus 3 Exam 1 Review (Full Step-by-Step Solutions)|Professor V
+3|Exam Reviews|Calculus 3 Exam 1 Walkthrough|Professor V
+3|Exam Reviews|Calculus 3 Exam 2 Review|Professor V
+3|Exam Reviews|Calculus 3 Exam 2 Walkthrough|Professor V
+3|Exam Reviews|Calculus 3 Exam 3 Review|Professor V
+3|Exam Reviews|Calculus 3 Exam 3 Walkthrough|Professor V
+3|Exam Reviews|Calculus 3 Exam 3 Walkthrough In 36 Minutes|Professor V
+3|Exam Reviews|Calculus 3 Final Exam Review Part 1|Professor V
+3|Exam Reviews|Calculus 3 Final Exam Review Part 2|Professor V
+3|Exam Reviews|Calculus 3 Final Exam Review Part 3|Professor V
+3|Exam Reviews|Calculus 3 Final Exam Review Part 4|Professor V
+3|Exam Reviews|Calculus 3 Final Exam Walkthrough|Professor V
+3|Exam Reviews|How to Pass Your Calculus 3 Final Exam|Professor V
+3|Exam Reviews|How to Pass Your Calculus 3 Final Exam (Vector Calc)|Professor V
+4|Intro & First-Order Equations|The Plan for Differential Equations (DE 1)|Leonard
+4|Intro & First-Order Equations|Introduction to Differential Equations (DE 2)|Leonard
+4|Intro & First-Order Equations|Basic Definitions and Terminology (1.1)|Professor V
+4|Intro & First-Order Equations|Checking Solutions in Differential Equations (DE 3)|Leonard
+4|Intro & First-Order Equations|Introduction to Initial Value Problems (DE 4)|Leonard
+4|Intro & First-Order Equations|Preliminary Theory - Initial-Value Problems (1.2)|Professor V
+4|Intro & First-Order Equations|Introduction to Time Rate of Change (DE 5)|Leonard
+4|Intro & First-Order Equations|Solving Basic Differential Equations with Integration (DE 6)|Leonard
+4|Intro & First-Order Equations|Differential Equations with Velocity and Acceleration (DE 7)|Leonard
+4|Intro & First-Order Equations|Problem Solving with Velocity and Acceleration (DE 8)|Leonard
+4|Intro & First-Order Equations|Introduction to Slope Fields (DE 9)|Leonard
+4|Intro & First-Order Equations|Applications of Slope Fields (DE 10)|Leonard
+4|Intro & First-Order Equations|Watch Before Diff Eq 11|Leonard
+4|Intro & First-Order Equations|Existence and Uniqueness of Solutions (DE 11)|Leonard
+4|Intro & First-Order Equations|Separable Differential Equations (DE 12)|Leonard
+4|Intro & First-Order Equations|Separable Variables (2.2)|Professor V
+4|Intro & First-Order Equations|Separable Equations with Initial Values (DE 13)|Leonard
+4|Intro & First-Order Equations|Applications with Separable Equations (DE 14)|Leonard
+4|Intro & First-Order Equations|Intro to Linear Differential Equations and Integrating Factors (DE 15)|Leonard
+4|Intro & First-Order Equations|Linear Equations (2.3)|Professor V
+4|Intro & First-Order Equations|Solving Linear Differential Equations with an Integrating Factor (DE 16)|Leonard
+4|Intro & First-Order Equations|Domain Restrictions in Differential Equations and Integrating Factors (DE 17)|Leonard
+4|Intro & First-Order Equations|Special Integration in a Linear Differential Equation Problem (DE 18)|Leonard
+4|Intro & First-Order Equations|Mixture Problems in Linear Differential Equations (DE 19)|Leonard
+4|Intro & First-Order Equations|Exact Equations (2.4)|Professor V
+4|Intro & First-Order Equations|Substitutions for Homogeneous First Order Differential Equations (DE 20)|Leonard
+4|Intro & First-Order Equations|Solving Homogeneous First Order Differential Equations (DE 21)|Leonard
+4|Intro & First-Order Equations|Solving DEs with a Composition (Obvious) Substitution (DE 22)|Leonard
+4|Intro & First-Order Equations|Solutions by Substitutions (2.5)|Professor V
+4|Intro & First-Order Equations|How to Solve Bernoulli Differential Equations (DE 23)|Leonard
+4|Intro & First-Order Equations|Solving DEs with Embedded Derivative Substitutions (DE 24)|Leonard
+4|Intro & First-Order Equations|How Embedded Derivatives Can Make Differential Equations Easier (DE 25)|Leonard
+4|Intro & First-Order Equations|Reducible Second Order DEs, Missing Y (DE 26)|Leonard
+4|Intro & First-Order Equations|Reducible Second Order DEs, Missing X (DE 27)|Leonard
+4|Intro & First-Order Equations|What Are Exact Differential Equations (DE 28)|Leonard
+4|Intro & First-Order Equations|Solving Exact Differential Equations (DE 29)|Leonard
+4|Intro & First-Order Equations|Integrating Factor for Exact Differential Equations (DE 30)|Leonard
+4|Modeling with First-Order Equations|Introduction to Population Models and Logistic Equation (DE 31)|Leonard
+4|Modeling with First-Order Equations|Basic Population Models (DE 32)|Leonard
+4|Modeling with First-Order Equations|Birth Rates and Death Rates (DE 33)|Leonard
+4|Modeling with First-Order Equations|Using Partial Fractions in Differential Equations (DE 34)|Leonard
+4|Modeling with First-Order Equations|Population Growth and Decline (DE 35)|Leonard
+4|Modeling with First-Order Equations|Equilibrium Solutions and Stability of Differential Equations (DE 36)|Leonard
+4|Modeling with First-Order Equations|Stability of Critical Points (DE 37)|Leonard
+4|Modeling with First-Order Equations|Harvesting Populations in Differential Equations (DE 38)|Leonard
+4|Modeling with First-Order Equations|Linear Models - Initial Value Problems (3.1)|Professor V
+4|Modeling with First-Order Equations|Nonlinear Models (3.2)|Professor V
+4|Higher-Order Linear Equations|Preliminary Theory - Linear Equations (4.1)|Professor V
+4|Higher-Order Linear Equations|Reduction of Order (4.2)|Professor V
+4|Higher-Order Linear Equations|Homogeneous Linear Equations with Constant Coefficients (4.3)|Professor V
+4|Higher-Order Linear Equations|Undetermined Coefficients - Superposition Approach (4.4)|Professor V
+4|Higher-Order Linear Equations|Variation of Parameters (4.6)|Professor V
+4|Higher-Order Linear Equations|Cauchy-Euler Equations (4.7)|Professor V
+4|Higher-Order Linear Equations|Solving Systems of Linear ODEs by Elimination (4.9)|Professor V
+4|Higher-Order Linear Equations|Nonlinear Equations (4.10)|Professor V
+4|Modeling with Higher-Order Equations|Linear Models - Initial-Value Problems (5.1)|Professor V
+4|Modeling with Higher-Order Equations|Linear Models - Boundary-Value Problems (5.2)|Professor V
+4|Series Solutions|Solutions About Ordinary Points (6.1)|Professor V
+4|Series Solutions|Solutions About Singular Points (6.2)|Professor V
+4|Series Solutions|Special Functions (6.3)|Professor V
+4|Laplace Transforms|Definition of the Laplace Transform (7.1)|Professor V
+4|Laplace Transforms|Inverse Transforms and Transforms of Derivatives (7.2)|Professor V
+4|Laplace Transforms|Operational Properties I (7.3)|Professor V
+4|Laplace Transforms|Operational Properties II (7.4)|Professor V
+4|Laplace Transforms|The Dirac Delta Function (7.5)|Professor V
+4|Laplace Transforms|Systems of Linear Differential Equations (7.6)|Professor V
+4|Systems of Linear Differential Equations|Preliminary Theory - Linear Systems (8.1)|Professor V
+4|Systems of Linear Differential Equations|Homogeneous Linear Systems with Real Eigenvalues (8.2)|Professor V
+4|Systems of Linear Differential Equations|Homogeneous Linear Systems with Complex Eigenvalues (8.2)|Professor V
+4|Systems of Linear Differential Equations|Homogeneous Linear Systems with Repeated Eigenvalues (8.2)|Professor V
+4|Systems of Linear Differential Equations|Nonhomogeneous Linear Systems (8.3)|Professor V
+4|Systems of Linear Differential Equations|Matrix Exponential (8.4)|Professor V
+4|Numerical & Qualitative Methods|Autonomous Systems (9.1)|Professor V
+4|Numerical & Qualitative Methods|Stability of Linear Systems (9.2)|Professor V
+4|Numerical & Qualitative Methods|Linearization and Local Stability (9.3)|Professor V
+4|Numerical & Qualitative Methods|Autonomous Systems as Mathematical Models (9.4)|Professor V
+4|Orthogonal Functions & Fourier Series|Orthogonal Functions (11.1)|Professor V
+4|Orthogonal Functions & Fourier Series|Fourier Series (11.2)|Professor V
+4|Orthogonal Functions & Fourier Series|Fourier Cosine and Sine Series (11.3)|Professor V
+4|Orthogonal Functions & Fourier Series|Sturm-Liouville Problems (11.4)|Professor V
+4|Boundary-Value Problems & PDEs|Separable Partial Differential Equations (12.1)|Professor V
+4|Boundary-Value Problems & PDEs|Classical Equations and Boundary-Value Problems (12.2)|Professor V
+4|Boundary-Value Problems & PDEs|Heat Equation (12.3)|Professor V
+4|Boundary-Value Problems & PDEs|Wave Equation (12.4)|Professor V
+4|Boundary-Value Problems & PDEs|Laplace's Equation (12.5)|Professor V
+4|Boundary-Value Problems & PDEs|Nonhomogeneous Boundary-Value Problems (12.6)|Professor V
+4|Boundary-Value Problems & PDEs|Orthogonal Series Expansions (12.7)|Professor V
+4|Boundary-Value Problems & PDEs|Higher-Dimensional Problems (12.8)|Professor V
+4|Exam Reviews|Differential Equations Exam 1 Review|Professor V
+4|Exam Reviews|Differential Equations Exam 2 Review|Professor V
+4|Exam Reviews|Differential Equations Exam 3 Review|Professor V
+4|Exam Reviews|Differential Equations Final Exam Review Part 1|Professor V
+4|Exam Reviews|Differential Equations Final Exam Review Part 2|Professor V
+4|Exam Reviews|Differential Equations Final Exam Review Part 3|Professor V
+`.trim().split('\n').filter(Boolean);
+
+const COURSES = {1:'Calc 1',2:'Calc 2',3:'Calc 3',4:'Calc 4 / DE'};
+const COURSE_COLOR = {1:'var(--c1)',2:'var(--c2)',3:'var(--c3)',4:'var(--c4)'};
+
+let VIDEOS = [];
+let CHAPTERS = []; // {course, name, ids:[]}
+(function build(){
+  let chapMap = {};
+  RAW.forEach((line,i)=>{
+    const parts = line.split('|');
+    const course = parseInt(parts[0],10);
+    const chapter = parts[1];
+    const title = parts[2];
+    const channel = parts[3];
+    const id = 'v'+i;
+    const url = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(title + ' ' + channel + (channel==='Leonard' ? ' Professor Leonard calculus' : ' Math with Professor V'));
+    VIDEOS.push({id, course, chapter, title, channel, url});
+    const key = course+'|'+chapter;
+    if(!chapMap[key]) chapMap[key] = {course, name:chapter, ids:[]};
+    chapMap[key].ids.push(id);
+  });
+  CHAPTERS = Object.values(chapMap);
+})();
+const VIDEO_BY_ID = Object.fromEntries(VIDEOS.map(v=>[v.id,v]));
+
+/* ---------------- STATE / STORAGE ---------------- */
+let DATA = { sessions: [], videos: {}, opened: [], completedLog: [] }; // videos[id] = {done, doneDate, scheduledDate}
+let storageReady = false;
+
+async function loadLocal(){
+  try{
+    const raw = localStorage.getItem('dojo-data');
+    if(raw) DATA = Object.assign({sessions:[], videos:{}, opened:[], completedLog:[]}, JSON.parse(raw));
+  }catch(e){ /* ignore */ }
+  try{
+    if(window.storage){
+      const res = await window.storage.get('dojo-data', false);
+      if(res && res.value){
+        const parsed = JSON.parse(res.value);
+        DATA = Object.assign({sessions:[], videos:{}, opened:[], completedLog:[]}, parsed);
+      }
+    }
+  }catch(e){}
+}
+
+async function loadData(){
+  await loadLocal();
+  if(window.DojoCloud){
+    DATA = window.DojoCloud.ensureIds(DATA);
+    const cloud = window.DojoCloud.getState();
+    if(cloud.configured && cloud.user){
+      try{
+        const remote = await window.DojoCloud.pull();
+        if(remote){
+          DATA = window.DojoCloud.mergeDojo(DATA, remote);
+        }
+        await window.DojoCloud.push(DATA);
+      }catch(e){ console.warn('cloud pull failed', e); }
+    }
+  }
+  storageReady = true;
+  writeLocal();
+  renderAll();
+  updateAccountUI();
+}
+
+function writeLocal(){
+  try{ localStorage.setItem('dojo-data', JSON.stringify(DATA)); }catch(e){}
+}
+
+let saveTimeout=null;
+let cloudSaveTimeout=null;
+function saveData(){
+  if(window.DojoCloud) DATA = window.DojoCloud.ensureIds(DATA);
+  DATA.updatedAt = Date.now();
+  writeLocal();
+  if(saveTimeout) clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(async ()=>{
+    try{ if(window.storage) await window.storage.set('dojo-data', JSON.stringify(DATA), false); }
+    catch(e){}
+  }, 250);
+  if(window.DojoCloud && window.DojoCloud.getState().user){
+    if(cloudSaveTimeout) clearTimeout(cloudSaveTimeout);
+    cloudSaveTimeout = setTimeout(async ()=>{
+      try{ await window.DojoCloud.push(DATA); updateAccountUI(); }
+      catch(e){ console.warn('cloud push failed', e); }
+    }, 600);
+  }
+}
+
+function updateAccountUI(){
+  const btnIn = document.getElementById('btnCloudSignIn');
+  const btnOut = document.getElementById('btnCloudSignOut');
+  const syncEl = document.getElementById('settingsSync');
+  const nameEl = document.getElementById('settingsName');
+  const photoEl = document.getElementById('settingsPhoto');
+  const cloud = window.DojoCloud ? window.DojoCloud.getState() : {configured:false,user:null};
+  if(btnIn) btnIn.hidden = !(cloud.configured && !cloud.user);
+  if(btnOut) btnOut.hidden = !cloud.user;
+  if(cloud.user){
+    if(nameEl) nameEl.textContent = cloud.user.name || cloud.user.email || 'Signed in';
+    if(photoEl){
+      if(cloud.user.photo){ photoEl.src = cloud.user.photo; photoEl.hidden = false; }
+      else photoEl.hidden = true;
+    }
+    if(syncEl) syncEl.innerHTML = '<span class="sync-dot on" id="syncDot"></span>cloud save on';
+  } else {
+    if(nameEl) nameEl.textContent = cloud.configured ? 'Not signed in' : 'Cloud not connected';
+    if(photoEl) photoEl.hidden = true;
+    if(syncEl) syncEl.innerHTML = '<span class="sync-dot" id="syncDot"></span>local only';
+  }
+}
+
+function setSettingsOpen(open){
+  const wrap = document.getElementById('settingsWrap');
+  if(!wrap) return;
+  wrap.classList.toggle('open', !!open);
+  if(open) updateAccountUI();
+}
+document.addEventListener('click', (e)=>{
+  const wrap = document.getElementById('settingsWrap');
+  if(!wrap) return;
+  if(wrap.contains(e.target)){
+    if(e.target.closest('#gearBtn')) setSettingsOpen(!wrap.classList.contains('open'));
+    return;
+  }
+  setSettingsOpen(false);
+});
+
+document.getElementById('btnAppReset').addEventListener('click', (e)=>{
+  e.stopPropagation();
+  setSettingsOpen(false);
+  const box = document.getElementById('resetConfirm');
+  if(box) box.classList.add('on');
+});
+document.getElementById('resetNo').addEventListener('click', ()=>{
+  document.getElementById('resetConfirm').classList.remove('on');
+});
+document.getElementById('resetConfirm').addEventListener('click', (e)=>{
+  if(e.target.id==='resetConfirm') e.currentTarget.classList.remove('on');
+});
+document.getElementById('resetYes').addEventListener('click', async ()=>{
+  document.getElementById('resetConfirm').classList.remove('on');
+  DATA = { sessions: [], videos: {}, opened: [], completedLog: [], updatedAt: Date.now() };
+  try{
+    localStorage.removeItem('dojo-data');
+    localStorage.removeItem('dojo-yt-ids');
+    localStorage.removeItem('dojo-pin-hash');
+    localStorage.removeItem('dojo-call-name');
+    sessionStorage.removeItem('dojo-unlocked');
+  }catch(err){}
+  if(typeof ytCache !== 'undefined') ytCache = {};
+  if(typeof resetTimer === 'function') resetTimer();
+  if(window.DojoCloud && window.DojoCloud.getState().user){
+    try{ await window.DojoCloud.push(DATA); }catch(e){}
+    try{ await window.DojoCloud.signOut(); }catch(e){}
+  }
+  location.reload();
+});
+
+
+/* ---------------- DATE HELPERS ---------------- */
+function todayStr(){ return fmtDate(new Date()); }
+function fmtDate(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function fmtHM(sec){ const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60); return h+'h '+m+'m'; }
+function fmtHMS(sec){ const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s=Math.floor(sec%60); return [h,m,s].map(x=>String(x).padStart(2,'0')).join(':'); }
+
+/* ---------------- TIMER ---------------- */
+let timerState = 'stopped';
+let elapsed = 0;
+let tickHandle = null;
+const HUD_CIRC = 2*Math.PI*100;
+
+function updateHud(){
+  const timeStr = fmtHMS(elapsed);
+  document.getElementById('timerDisplay').textContent = timeStr;
+  const sideTime = document.getElementById('sideTimerTime');
+  const sideStat = document.getElementById('sideTimerStatus');
+  if(sideTime) sideTime.textContent = timeStr;
+  if(sideStat) sideStat.textContent = timerState==='running' ? 'training' : timerState==='paused' ? 'paused' : 'standby';
+  const loopPct = (elapsed % 3600)/3600;
+  document.getElementById('hudProg').style.strokeDashoffset = HUD_CIRC * (1-loopPct);
+  document.getElementById('timerStatus').textContent = timerState==='running' ? 'training...' : timerState==='paused' ? 'paused' : 'standby';
+  if(timerState === 'running') document.title = `\u23F1 [${timeStr}] Calc Dojo`;
+  else if(timerState === 'paused') document.title = `\u23F8 [${timeStr}] Calc Dojo`;
+  else document.title = '\u8A08\u7B97\u9053\u5834 \u2014 Calc Dojo';
+}
+
+function tick(){ elapsed += 1; updateHud(); }
+
+function syncTimerButtons(){
+  const idle = (timerState==='stopped' && elapsed===0);
+  const start = document.getElementById('btnStart');
+  if(start){
+    start.disabled = false;
+    start.textContent = timerState==='running' ? '\u23F8 Pause' : timerState==='paused' ? '\u25B6 Resume' : '\u25B6 Start';
+  }
+  const sideStart = document.getElementById('sideStart');
+  if(sideStart){
+    sideStart.disabled = false;
+    sideStart.textContent = timerState==='running' ? '\u23F8' : '\u25B6';
+    sideStart.title = timerState==='running' ? 'Pause' : timerState==='paused' ? 'Resume' : 'Start';
+  }
+  ['btnStop','sideStop','btnReset','sideReset'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.disabled = idle;
+  });
+}
+
+function startTimer(){
+  if(timerState==='stopped') elapsed = 0;
+  timerState='running';
+  clearInterval(tickHandle);
+  tickHandle = setInterval(tick,1000);
+  syncTimerButtons();
+  updateHud();
+}
+
+function pauseTimer(){
+  timerState='paused';
+  clearInterval(tickHandle);
+  syncTimerButtons();
+  updateHud();
+}
+
+function resumeTimer(){
+  timerState='running';
+  clearInterval(tickHandle);
+  tickHandle=setInterval(tick,1000);
+  syncTimerButtons();
+  updateHud();
+}
+
+function stopTimer(){
+  clearInterval(tickHandle);
+  if(elapsed>0){
+    DATA.sessions.push({date: todayStr(), seconds: elapsed});
+    saveData();
+  }
+  timerState='stopped';
+  elapsed=0;
+  syncTimerButtons();
+  updateHud();
+  renderDashboardStats();
+  renderCalendar();
+  renderStats();
+}
+
+function resetTimer(){
+  clearInterval(tickHandle);
+  timerState='stopped';
+  elapsed=0;
+  syncTimerButtons();
+  updateHud();
+}
+
+document.getElementById('btnStart').addEventListener('click',()=>{
+  if(timerState==='running') pauseTimer();
+  else if(timerState==='paused') resumeTimer();
+  else startTimer();
+});
+document.getElementById('btnStop').addEventListener('click',stopTimer);
+const btnReset = document.getElementById('btnReset');
+if(btnReset) btnReset.addEventListener('click', resetTimer);
+const sideStart = document.getElementById('sideStart');
+const sideStop = document.getElementById('sideStop');
+const sideReset = document.getElementById('sideReset');
+if(sideStart) sideStart.addEventListener('click', ()=>{
+  if(timerState==='running') pauseTimer();
+  else if(timerState==='paused') resumeTimer();
+  else startTimer();
+});
+if(sideStop) sideStop.addEventListener('click', stopTimer);
+if(sideReset) sideReset.addEventListener('click', resetTimer);
+
+/* ---------------- IN-APP YOUTUBE PLAYER ---------------- */
+const YT_CACHE_KEY = 'dojo-yt-ids';
+const COURSE_PLAYLIST = {
+  1: 'PLF797E961509B4EB5',
+  2: 'PLDesaqWTN6EQ2J4vgsN1HyBeRADEh4Cw-',
+  3: 'PLDesaqWTN6ESk16YRmzuJ8f6-rnuy0Ry7',
+  4: 'PLDesaqWTN6ESPaHy2QUKVaXNZuQNxkYQ_'
+};
+let currentLecture = null;
+let ytCache = {};
+try{ ytCache = JSON.parse(localStorage.getItem(YT_CACHE_KEY) || '{}') || {}; }catch(e){ ytCache = {}; }
+
+function lectureQuery(v){
+  const who = v.channel==='Leonard' ? 'Professor Leonard' : 'Math with Professor V';
+  return (v.title + ' ' + who + ' calculus').trim();
+}
+
+function ytSearchUrl(v){
+  return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(lectureQuery(v));
+}
+
+function loadYtCache(){
+  try{ ytCache = JSON.parse(localStorage.getItem(YT_CACHE_KEY) || '{}') || {}; }
+  catch(e){ ytCache = {}; }
+}
+
+function saveYtCache(){
+  try{ localStorage.setItem(YT_CACHE_KEY, JSON.stringify(ytCache)); }catch(e){}
+}
+
+
+function educationParams(){
+  const p = 'autoplay=1&rel=1&fs=1&playsinline=1&enablejsapi=1';
+  if(location.protocol==='http:' || location.protocol==='https:'){
+    return p + '&origin=' + encodeURIComponent(location.origin);
+  }
+  return p;
+}
+function educationEmbed(vid){
+  return 'https://www.youtube.com/embed/' + vid + '?' + educationParams();
+}
+function educationPlaylist(list){
+  return 'https://www.youtube.com/embed/videoseries?list=' + list + '&' + educationParams();
+}
+
+async function resolveYoutubeId(v){
+  const key = v.id + ':' + v.title;
+  if(ytCache[key]) return ytCache[key];
+  const q = lectureQuery(v);
+  const apiKey = window.YOUTUBE_API_KEY || '';
+  if(apiKey){
+    try{
+      const url = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=1&q=' + encodeURIComponent(q) + '&key=' + encodeURIComponent(apiKey);
+      const res = await fetch(url);
+      const json = await res.json();
+      const id = json && json.items && json.items[0] && json.items[0].id && json.items[0].id.videoId;
+      if(id){ ytCache[key] = id; saveYtCache(); return id; }
+    }catch(e){}
+  }
+  const endpoints = [
+    'https://pipedapi.kavin.rocks/search?q=' + encodeURIComponent(q),
+    'https://inv.nadeko.net/api/v1/search?q=' + encodeURIComponent(q) + '&type=video'
+  ];
+  for(const ep of endpoints){
+    try{
+      const res = await fetch(ep);
+      if(!res.ok) continue;
+      const json = await res.json();
+      const list = Array.isArray(json) ? json : (json.items || json);
+      const hit = (list || []).find(x => (x.type==='video' || x.id || x.url || x.videoId) && (x.videoId || x.id || '').length >= 8);
+      const id = hit && (hit.videoId || (typeof hit.id==='string' ? hit.id : null) || (hit.url && String(hit.url).match(/[\w-]{11}/) && hit.url.match(/[\w-]{11}/)[0]));
+      if(id && /^[\w-]{11}$/.test(id)){ ytCache[key] = id; saveYtCache(); return id; }
+    }catch(e){}
+  }
+  return null;
+}
+
+function setPlayerFrame(src, loadingText){
+  const frame = document.getElementById('ytFrame');
+  const status = document.getElementById('ytStatus');
+  if(src){
+    frame.hidden = false;
+    frame.src = src;
+    if(status) status.style.display = 'none';
+  } else {
+    frame.hidden = true;
+    frame.removeAttribute('src');
+    if(status){ status.style.display = 'flex'; const tx=document.getElementById('ytStatusText'); if(tx) tx.textContent = loadingText || 'Locating lecture…'; else status.lastChild && (status.lastChild.textContent = loadingText || 'Locating lecture…'); }
+  }
+}
+
+async function playLecture(id){
+  if(pendingScheduleDate){
+    scheduleLectureToDate(id, pendingScheduleDate);
+    return;
+  }
+  const v = VIDEO_BY_ID[id];
+  if(!v) return;
+  currentLecture = v;
+  rememberOpened(v.id);
+  const box = document.getElementById('ytPlayer');
+  const title = document.getElementById('ytTitle');
+  const sub = document.getElementById('ytSub');
+  if(box) box.classList.add('on');
+  document.body.classList.add('player-on');
+  setPlayerExpanded(false);
+  placePlayerDefault();
+  if(title) title.textContent = v.title;
+  if(sub) sub.textContent = COURSES[v.course] + ' · ' + v.chapter + ' · ' + v.channel;
+  setPlayerFrame(null, 'Finding the lecture…');
+  if(timerState==='stopped') startTimer();
+
+  const vid = await resolveYoutubeId(v);
+  if(currentLecture !== v) return;
+  if(vid){
+    setPlayerFrame(educationEmbed(vid));
+    return;
+  }
+  const list = COURSE_PLAYLIST[v.course];
+  if(list){
+    setPlayerFrame(educationPlaylist(list));
+    return;
+  }
+  setPlayerFrame(null, 'Could not embed that lecture. Use Open on YouTube.');
+}
+
+function closePlayer(){
+  currentLecture = null;
+  pauseYoutube();
+  const box = document.getElementById('ytPlayer');
+  if(box) box.classList.remove('on');
+  document.body.classList.remove('player-on');
+  document.body.classList.remove('player-expanded');
+  document.body.classList.remove('flames-off');
+  const exp = document.getElementById('ytExpand');
+  if(exp){ exp.textContent = '⛶'; exp.title = 'Expand'; }
+  setPlayerFrame(null, 'Pick a lecture to play.');
+}
+
+function pauseYoutube(){
+  const frame = document.getElementById('ytFrame');
+  try{
+    if(frame && frame.contentWindow){
+      frame.contentWindow.postMessage(JSON.stringify({event:'command', func:'pauseVideo', args:[]}), '*');
+    }
+  }catch(e){}
+}
+
+function setPlayerExpanded(on){
+  document.body.classList.toggle('player-expanded', !!on);
+  document.body.classList.toggle('flames-off', !!on);
+  const exp = document.getElementById('ytExpand');
+  if(exp){
+    exp.textContent = on ? '❐' : '⛶';
+    exp.title = on ? 'Shrink' : 'Expand';
+  }
+  const box = document.getElementById('ytPlayer');
+  if(!box) return;
+  if(on){
+    playerPhys.vx = 0; playerPhys.vy = 0; playerPhys.flying = false;
+    box.style.left = '';
+    box.style.top = '';
+    box.style.right = '';
+    box.style.bottom = '';
+  } else {
+    placePlayerDefault(true);
+  }
+}
+
+
+const playerPhys = { x:null, y:null, w:null, vx:0, vy:0, flying:false, drag:false, lastX:0, lastY:0, lastT:0 };
+function sidebarWall(){
+  return window.matchMedia('(max-width:640px)').matches ? 76 : 230;
+}
+function playerBoxSize(){
+  const minW = 260;
+  const maxW = Math.max(minW, window.innerWidth - sidebarWall() - 16);
+  let w = playerPhys.w;
+  if(!w){
+    const box = document.getElementById('ytPlayer');
+    w = box ? (box.getBoundingClientRect().width || 420) : 420;
+  }
+  w = Math.min(maxW, Math.max(minW, w));
+  return { w, h: w * 9/16 };
+}
+function clampPlayer(x,y,w,h){
+  const minX = sidebarWall();
+  const minY = 0;
+  const maxX = Math.max(minX, window.innerWidth - w);
+  const maxY = Math.max(minY, window.innerHeight - h);
+  return { x: Math.min(maxX, Math.max(minX, x)), y: Math.min(maxY, Math.max(minY, y)), minX, minY, maxX, maxY };
+}
+function applyPlayerPos(){
+  const box = document.getElementById('ytPlayer');
+  if(!box || document.body.classList.contains('player-expanded')) return;
+  const {w,h} = playerBoxSize();
+  const c = clampPlayer(playerPhys.x, playerPhys.y, w, h);
+  playerPhys.x = c.x; playerPhys.y = c.y;
+  box.style.left = c.x + 'px';
+  box.style.top = c.y + 'px';
+  box.style.right = 'auto';
+  box.style.bottom = 'auto';
+  box.style.width = w + 'px';
+  box.style.height = h + 'px';
+  box.style.aspectRatio = '16 / 9';
+}
+function placePlayerDefault(keepIfSet){
+  if(document.body.classList.contains('player-expanded')) return;
+  const box = document.getElementById('ytPlayer');
+  if(!box) return;
+  const {w,h} = playerBoxSize();
+  if(keepIfSet && playerPhys.x!=null && playerPhys.y!=null){
+    applyPlayerPos();
+    return;
+  }
+  playerPhys.x = window.innerWidth - w - 18;
+  playerPhys.y = window.innerHeight - h - 18;
+  playerPhys.vx = 0; playerPhys.vy = 0; playerPhys.flying = false;
+  applyPlayerPos();
+}
+function stepPlayerPhysics(){
+  if(playerPhys.drag || document.body.classList.contains('player-expanded')) return;
+  const box = document.getElementById('ytPlayer');
+  if(!box || !box.classList.contains('on')) return;
+  const {w,h} = playerBoxSize();
+  playerPhys.x += playerPhys.vx;
+  playerPhys.y += playerPhys.vy;
+  const b = clampPlayer(playerPhys.x, playerPhys.y, w, h);
+  const rest = 0.72;
+  if(playerPhys.x <= b.minX || playerPhys.x >= b.maxX){
+    playerPhys.vx = -playerPhys.vx * rest;
+    playerPhys.x = Math.min(b.maxX, Math.max(b.minX, playerPhys.x));
+  }
+  if(playerPhys.y <= b.minY || playerPhys.y >= b.maxY){
+    playerPhys.vy = -playerPhys.vy * rest;
+    playerPhys.y = Math.min(b.maxY, Math.max(b.minY, playerPhys.y));
+  }
+  playerPhys.vx *= 0.94;
+  playerPhys.vy *= 0.94;
+  applyPlayerPos();
+  if(Math.hypot(playerPhys.vx, playerPhys.vy) > 0.18){
+    requestAnimationFrame(stepPlayerPhysics);
+  } else {
+    playerPhys.vx = 0; playerPhys.vy = 0; playerPhys.flying = false;
+  }
+}
+function initPlayerPhysics(){
+  const box = document.getElementById('ytPlayer');
+  const chrome = box && box.querySelector('.yt-chrome');
+  const drag = document.getElementById('ytDrag');
+  if(!box || box.dataset.phys === '1') return;
+  box.dataset.phys = '1';
+  const handles = [chrome, drag].filter(Boolean);
+  const onDown = (e)=>{
+    if(e.target.closest('button') || e.target.closest('.yt-resize')) return;
+    if(document.body.classList.contains('player-expanded')) return;
+    e.preventDefault();
+    playerPhys.drag = true;
+    playerPhys.flying = false;
+    playerPhys.vx = 0; playerPhys.vy = 0;
+    playerPhys.lastX = e.clientX;
+    playerPhys.lastY = e.clientY;
+    playerPhys.lastT = performance.now();
+    const r = box.getBoundingClientRect();
+    playerPhys.x = r.left; playerPhys.y = r.top; playerPhys.w = r.width;
+    try{ e.currentTarget.setPointerCapture(e.pointerId); }catch(err){}
+  };
+  const onMove = (e)=>{
+    if(!playerPhys.drag) return;
+    const now = performance.now();
+    const dt = Math.max(8, now - playerPhys.lastT);
+    const dx = e.clientX - playerPhys.lastX;
+    const dy = e.clientY - playerPhys.lastY;
+    playerPhys.x += dx;
+    playerPhys.y += dy;
+    playerPhys.vx = dx * (16 / dt) * 1.2;
+    playerPhys.vy = dy * (16 / dt) * 1.2;
+    playerPhys.lastX = e.clientX;
+    playerPhys.lastY = e.clientY;
+    playerPhys.lastT = now;
+    applyPlayerPos();
+  };
+  const onUp = (e)=>{
+    if(!playerPhys.drag) return;
+    playerPhys.drag = false;
+    try{ e.currentTarget.releasePointerCapture(e.pointerId); }catch(err){}
+    if(Math.hypot(playerPhys.vx, playerPhys.vy) > 0.55){
+      playerPhys.flying = true;
+      requestAnimationFrame(stepPlayerPhysics);
+    }
+  };
+  handles.forEach(h=>{
+    h.addEventListener('pointerdown', onDown);
+    h.addEventListener('pointermove', onMove);
+    h.addEventListener('pointerup', onUp);
+    h.addEventListener('pointercancel', onUp);
+  });
+
+  let resizeCorner = null;
+  let rs = null;
+  box.querySelectorAll('.yt-resize').forEach(h=>{
+    h.addEventListener('pointerdown', (e)=>{
+      if(document.body.classList.contains('player-expanded')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      playerPhys.drag = false;
+      playerPhys.flying = false;
+      playerPhys.vx = 0; playerPhys.vy = 0;
+      const r = box.getBoundingClientRect();
+      resizeCorner = h.dataset.corner;
+      rs = { x:r.left, y:r.top, w:r.width, h:r.height, px:e.clientX, py:e.clientY };
+      try{ h.setPointerCapture(e.pointerId); }catch(err){}
+    });
+    h.addEventListener('pointermove', (e)=>{
+      if(!resizeCorner || !rs) return;
+      const dx = e.clientX - rs.px;
+      const dy = e.clientY - rs.py;
+      const minW = 260;
+      const maxW = Math.max(minW, window.innerWidth - sidebarWall() - 8);
+      let w = rs.w;
+      if(resizeCorner==='se') w = rs.w + (dx + dy * 16/9) / 2;
+      if(resizeCorner==='sw') w = rs.w + (-dx + dy * 16/9) / 2;
+      if(resizeCorner==='ne') w = rs.w + (dx - dy * 16/9) / 2;
+      if(resizeCorner==='nw') w = rs.w + (-dx - dy * 16/9) / 2;
+      w = Math.min(maxW, Math.max(minW, w));
+      const hh = w * 9/16;
+      let x = rs.x, y = rs.y;
+      if(resizeCorner==='sw' || resizeCorner==='nw') x = rs.x + rs.w - w;
+      if(resizeCorner==='ne' || resizeCorner==='nw') y = rs.y + rs.h - hh;
+      playerPhys.w = w;
+      playerPhys.x = x;
+      playerPhys.y = y;
+      applyPlayerPos();
+    });
+    const endR = (e)=>{
+      resizeCorner = null; rs = null;
+      try{ h.releasePointerCapture(e.pointerId); }catch(err){}
+    };
+    h.addEventListener('pointerup', endR);
+    h.addEventListener('pointercancel', endR);
+  });
+
+  window.addEventListener('resize', ()=>{
+    if(box.classList.contains('on') && !document.body.classList.contains('player-expanded')) applyPlayerPos();
+  });
+}
+
+function bindPlayButtons(root){
+  (root || document).querySelectorAll('[data-play]').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      if(pendingScheduleDate) scheduleLectureToDate(btn.dataset.play, pendingScheduleDate);
+      else playLecture(btn.dataset.play);
+    });
+  });
+}
+
+function scheduleLectureToDate(id, ds){
+  if(!id || !ds) return;
+  const st = DATA.videos[id] || {};
+  if(st.scheduledDate === ds) delete st.scheduledDate;
+  else st.scheduledDate = ds;
+  DATA.videos[id] = st;
+  saveData();
+  renderAll();
+}
+
+
+const ytClose = document.getElementById('ytClose');
+const ytExpand = document.getElementById('ytExpand');
+if(ytClose) ytClose.addEventListener('click', closePlayer);
+if(ytExpand) ytExpand.addEventListener('click', (e)=>{
+  e.stopPropagation();
+  setPlayerExpanded(!document.body.classList.contains('player-expanded'));
+});
+initPlayerPhysics();
+
+
+const SENSEI_KEY = 'dojo-gemini-key';
+function getSenseiKey(){
+  const box = document.getElementById('senseiKey');
+  if(box && box.value.trim()) return box.value.trim();
+  try{ return localStorage.getItem(SENSEI_KEY) || ''; }catch(e){ return ''; }
+}
+const SENSEI_MODELS = {
+  gemini: ['gemini-2.0-flash','gemini-2.5-flash','gemini-1.5-pro'],
+  openrouter: ['openai/gpt-4o-mini','google/gemini-2.0-flash-exp:free','deepseek/deepseek-chat','anthropic/claude-3.5-sonnet'],
+  nvidia: ['meta/llama-3.1-70b-instruct','nvidia/llama-3.1-nemotron-70b-instruct','google/gemma-2-27b-it']
+};
+function fillSenseiModels(){
+  const prov = (document.getElementById('senseiProvider')||{}).value || 'gemini';
+  const pick = document.getElementById('senseiModelPick');
+  if(!pick) return;
+  const list = SENSEI_MODELS[prov] || SENSEI_MODELS.gemini;
+  const saved = localStorage.getItem('dojo-sensei-model') || '';
+  pick.innerHTML = list.map(m=>'<option value="'+m+'">'+m.split('/').pop()+'</option>').join('');
+  pick.value = list.includes(saved) ? saved : list[0];
+}
+(function wireSenseiKey(){
+  const ids = [['senseiKey','dojo-gemini-key'],['senseiProvider','dojo-sensei-provider']];
+  ids.forEach(([id,key])=>{
+    const box = document.getElementById(id);
+    if(!box) return;
+    try{ const v = localStorage.getItem(key); if(v) box.value = v; }catch(e){}
+    box.addEventListener('change', ()=>{
+      try{ localStorage.setItem(key, box.value.trim()); }catch(e){}
+      if(id==='senseiProvider') fillSenseiModels();
+    });
+    box.addEventListener('click', (e)=> e.stopPropagation());
+  });
+  fillSenseiModels();
+  const pick = document.getElementById('senseiModelPick');
+  if(pick) pick.addEventListener('change', ()=>{ try{ localStorage.setItem('dojo-sensei-model', pick.value); }catch(e){} });
+})();
+
+function renderMathInto(el, src){
+  el.innerHTML = '';
+  const text = String(src||'');
+  const parts = text.split(/(\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\$[^$\n]+\$|\\\([^\n]+?\\\))/);
+  parts.forEach(part=>{
+    if(!part) return;
+    const display = (part.startsWith('$$') && part.endsWith('$$')) || (part.startsWith('\\[') && part.endsWith('\\]'));
+    const inline = (part.startsWith('$') && part.endsWith('$') && part.length>2 && !part.startsWith('$$')) || (part.startsWith('\\(') && part.endsWith('\\)'));
+    if(display || inline){
+      let tex = part;
+      if(part.startsWith('$$')) tex = part.slice(2,-2);
+      else if(part.startsWith('\\[')) tex = part.slice(2,-2);
+      else if(part.startsWith('\\(')) tex = part.slice(2,-2);
+      else tex = part.slice(1,-1);
+      const node = document.createElement(display ? 'div' : 'span');
+      if(window.katex){
+        try{ window.katex.render(tex.trim(), node, {displayMode:!!display, throwOnError:false, output:'html'}); }
+        catch(e){ node.textContent = part; }
+      } else node.textContent = part;
+      el.appendChild(node);
+    } else {
+      const node = document.createElement('span');
+      node.textContent = part;
+      el.appendChild(node);
+    }
+  });
+}
+
+function addSenseiMsg(role, text){
+  const log = document.getElementById('senseiLog');
+  if(!log) return;
+  const note = log.querySelector('.empty-note');
+  if(note) note.remove();
+  const wrap = document.createElement('div');
+  wrap.className = 'sensei-msg' + (role==='me' ? ' me' : '');
+  const r = document.createElement('div');
+  r.className = 'sensei-role';
+  r.textContent = role==='me' ? 'You' : 'Sensei';
+  const b = document.createElement('div');
+  b.className = 'sensei-body';
+  if(role==='me') b.textContent = text;
+  else renderMathInto(b, text);
+  wrap.appendChild(r);
+  wrap.appendChild(b);
+  log.appendChild(wrap);
+  log.scrollTop = log.scrollHeight;
+  return b;
+}
+
+function senseiGreetingPool(name){
+  const h = new Date().getHours();
+  return h>=5 && h<12 ? [
+    'Rise and derive, '+name,
+    'Morning grind, '+name+'?',
+    'Fresh limits today, '+name
+  ] : h>=12 && h<17 ? [
+    'Still cooking, '+name+'?',
+    'Lock in, '+name,
+    'Midday grind, '+name
+  ] : h>=17 && h<22 ? [
+    'Night dojo open, '+name,
+    'Evening reps, '+name+'?',
+    'Cooking late, '+name
+  ] : [
+    'Still up, '+name+'?',
+    'Midnight sensei mode, '+name,
+    'No sleep, all calc, '+name
+  ];
+}
+let senseiLoadLine = '';
+function applySenseiGreeting(){
+  const title = document.getElementById('senseiHello');
+  const sub = document.getElementById('senseiHelloSub');
+  if(!title) return;
+  const name = getCallName() || 'disciple';
+  if(!senseiLoadLine) senseiLoadLine = pickRandom(senseiGreetingPool(name));
+  title.textContent = senseiLoadLine;
+  if(sub) sub.textContent = 'Drop a screenshot or type the problem.';
+}
+
+const senseiAttach = [];
+function renderSenseiShots(){
+  const box = document.getElementById('senseiShots');
+  if(!box) return;
+  box.innerHTML = '';
+  senseiAttach.forEach((a,i)=>{
+    const w = document.createElement('div');
+    w.className = 'sensei-shot';
+    if(a.url){
+      const img = document.createElement('img');
+      img.src = a.url;
+      img.alt = a.name || 'file';
+      w.appendChild(img);
+    } else {
+      const lab = document.createElement('div');
+      lab.style.cssText='font-size:10px;padding:6px;word-break:break-all;';
+      lab.textContent = a.name || 'file';
+      w.appendChild(lab);
+    }
+    const x = document.createElement('button');
+    x.type = 'button';
+    x.textContent = '×';
+    x.addEventListener('click', ()=>{
+      URL.revokeObjectURL(a.url);
+      senseiAttach.splice(i,1);
+      renderSenseiShots();
+    });
+    w.appendChild(x);
+    box.appendChild(w);
+  });
+}
+function addSenseiFile(file){
+  if(!file) return;
+  const url = file.type.startsWith('image/') ? URL.createObjectURL(file) : '';
+  senseiAttach.push({ file, url, name: file.name });
+  renderSenseiShots();
+}
+const senseiPhoto = document.getElementById('senseiPhoto');
+if(senseiPhoto){
+  senseiPhoto.addEventListener('change', ()=>{
+    const file = senseiPhoto.files && senseiPhoto.files[0];
+    addSenseiFile(file);
+    senseiPhoto.value = '';
+  });
+}
+const senseiBar = document.getElementById('senseiBar') || document.getElementById('senseiForm');
+if(senseiBar){
+  ['dragenter','dragover'].forEach(ev=> senseiBar.addEventListener(ev, (e)=>{ e.preventDefault(); senseiBar.classList.add('drag'); }));
+  ['dragleave','drop'].forEach(ev=> senseiBar.addEventListener(ev, (e)=>{ e.preventDefault(); if(ev==='drop'){ const f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0]; addSenseiFile(f);} senseiBar.classList.remove('drag'); }));
+}
+
+function fileToInline(file){
+  return new Promise((resolve,reject)=>{
+    const r = new FileReader();
+    if(file.type.startsWith('image/')){
+      r.onload = ()=>{
+        const raw = String(r.result||'');
+        resolve({ kind:'image', mime_type: file.type || 'image/jpeg', data: raw.split(',')[1] || '' });
+      };
+      r.readAsDataURL(file);
+    } else {
+      r.onload = ()=> resolve({ kind:'text', name: file.name, text: String(r.result||'') });
+      r.readAsText(file);
+    }
+    r.onerror = reject;
+  });
+}
+
+async function askSensei(question, images){
+  const key = getSenseiKey();
+  if(!key){
+    return 'Add a free Gemini API key in Settings first. Open Google AI Studio, create a key, paste it, then ask again.';
+  }
+  const prompt = 'You are Calc Dojo tutor, a careful calculus tutor. Answer only math questions. If an image is attached, read the problem from it. Show steps. Write EVERY equation, fraction, integral, limit, sum, root, and exponent in LaTeX. Use $...$ for inline math and $$...$$ for displayed math. Example: $$\\int_0^1 x^2\\,dx = \\frac{1}{3}$$. Keep the tone clear and short.';
+  const provider = (document.getElementById('senseiProvider') && document.getElementById('senseiProvider').value) || localStorage.getItem('dojo-sensei-provider') || 'gemini';
+  const model = ((document.getElementById('senseiModelPick') && document.getElementById('senseiModelPick').value) || '').trim();
+  const qtext = question || 'Please solve the problem in the image.';
+
+  if(provider === 'gemini'){
+    const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model || 'gemini-2.0-flash') + ':generateContent?key=' + encodeURIComponent(key);
+    const parts = [{ text: qtext }];
+    if(images && images.length){
+      for(const img of images){
+        if(img.kind==='text') parts[0].text += '\n\n[File: '+img.name+']\n'+img.text.slice(0,12000);
+        else parts.push({ inline_data: { mime_type: img.mime_type, data: img.data } });
+      }
+    }
+    const res = await fetch(url, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ system_instruction:{ parts:[{ text: prompt }] }, contents:[{ role:'user', parts }] })
+    });
+    const json = await res.json();
+    if(!res.ok) throw new Error((json && json.error && json.error.message) || ('HTTP '+res.status));
+    const text = json && json.candidates && json.candidates[0] && json.candidates[0].content && json.candidates[0].content.parts
+      ? json.candidates[0].content.parts.map(p=>p.text||'').join('\n') : '';
+    return text.trim() || 'No answer came back.';
+  }
+
+  const root = (provider==='nvidia' ? 'https://integrate.api.nvidia.com/v1' : 'https://openrouter.ai/api/v1').replace(/\/$/,'');
+  const userParts = [{ type:'text', text: qtext }];
+  if(images && images.length){
+    for(const img of images){
+      if(img.kind==='text') userParts[0].text += '\n\n[File: '+img.name+']\n'+img.text.slice(0,12000);
+      else userParts.push({ type:'image_url', image_url:{ url: 'data:' + img.mime_type + ';base64,' + img.data } });
+    }
+  }
+  const res = await fetch(root + '/chat/completions', {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + key },
+    body: JSON.stringify({
+      model: model || (provider==='nvidia' ? 'meta/llama-3.1-70b-instruct' : 'openai/gpt-4o-mini'),
+      messages:[ {role:'system', content: prompt}, {role:'user', content: userParts} ]
+    })
+  });
+  const json = await res.json();
+  if(!res.ok) throw new Error((json && json.error && (json.error.message||json.error)) || ('HTTP '+res.status));
+  const text = json && json.choices && json.choices[0] && json.choices[0].message ? json.choices[0].message.content : '';
+  return (text||'').trim() || 'No answer came back.';
+
+}
+
+const senseiForm = document.getElementById('senseiForm');
+if(senseiForm){
+  senseiForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const input = document.getElementById('senseiInput');
+    const q = (input && input.value || '').trim();
+    if(!q && !senseiAttach.length) return;
+    input.value = '';
+    addSenseiMsg('me', q || (senseiAttach.length + ' photo' + (senseiAttach.length>1?'s':'')));
+    const imgs = [];
+    for(const a of senseiAttach.slice()){
+      imgs.push(await fileToInline(a.file));
+      URL.revokeObjectURL(a.url);
+    }
+    senseiAttach.length = 0;
+    renderSenseiShots();
+    const body = addSenseiMsg('sensei', 'Working...');
+    try{
+      const ans = await askSensei(q, imgs);
+      renderMathInto(body, ans);
+    }catch(err){
+      body.textContent = 'Sensei could not answer. ' + (err && err.message ? err.message : 'Check the API key.');
+    }
+  });
+}
+
+/* ---------------- PRIVATE PIN GATE ---------------- */
+
+(function customCursor(){
+  const dot = document.getElementById('cursorDot');
+  const ring = document.getElementById('cursorRing');
+  if(!dot || !ring) return;
+  let x=0,y=0,rx=0,ry=0;
+  window.addEventListener('pointermove', (e)=>{
+    x=e.clientX; y=e.clientY;
+    dot.style.left=x+'px'; dot.style.top=y+'px';
+    const t = e.target;
+    document.body.classList.toggle('cursor-hover', !!(t && t.closest && t.closest('button,a,input,textarea,select,.nav-btn,.video-row,.cal-cell,.gear-btn,[data-play]')));
+  });
+  window.addEventListener('pointerdown', ()=> document.body.classList.add('cursor-down'));
+  window.addEventListener('pointerup', ()=> document.body.classList.remove('cursor-down'));
+  (function follow(){
+    rx += (x-rx)*0.22; ry += (y-ry)*0.22;
+    ring.style.left=rx+'px'; ring.style.top=ry+'px';
+    requestAnimationFrame(follow);
+  })();
+})();
+
+const PIN_KEY = 'dojo-pin-hash';
+const UNLOCK_KEY = 'dojo-unlocked';
+const NAME_KEY = 'dojo-call-name';
+function getCallName(){ try{ return (localStorage.getItem(NAME_KEY)||'').trim(); }catch(e){ return ''; } }
+
+async function hashPin(pin){
+  const raw = 'dojo-v1:' + String(pin||'');
+  if(window.crypto && crypto.subtle){
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw));
+    return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+  let h = 2166136261;
+  for(let i=0;i<raw.length;i++){ h ^= raw.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return 'x' + (h>>>0).toString(16);
+}
+
+function hideGate(){
+  const gate = document.getElementById('appGate');
+  if(gate) gate.classList.add('hidden');
+  sessionStorage.setItem(UNLOCK_KEY, '1');
+  document.body.classList.add('unlocked');
+  const inst = document.getElementById('btnInstall');
+  if(inst && typeof deferredPrompt !== "undefined" && deferredPrompt) inst.hidden = false;
+}
+
+async function setupGate(){
+  const gate = document.getElementById('appGate');
+  const title = document.getElementById('gateTitle');
+  const copy = document.getElementById('gateCopy');
+  const input = document.getElementById('gatePin');
+  const err = document.getElementById('gateError');
+  const btn = document.getElementById('gateSubmit');
+  const oauthBlock = document.getElementById('oauthBlock');
+  if(!gate) return;
+
+  const cloud = window.DojoCloud ? window.DojoCloud.getState() : {configured:false,user:null};
+  if(sessionStorage.getItem(UNLOCK_KEY)==='1' && getCallName() && localStorage.getItem(PIN_KEY)){
+    gate.classList.add('hidden');
+    return;
+  }
+  if(oauthBlock) oauthBlock.hidden = !cloud.configured;
+  if(cloud.error && err) err.textContent = cloud.error;
+  const gbtn = document.getElementById('btnGoogle');
+  if(gbtn && !gbtn.dataset.busyBound){
+    gbtn.dataset.busyBound = '1';
+    gbtn.addEventListener('click', ()=>{
+      gbtn.textContent = 'Opening Google…';
+      gbtn.disabled = true;
+      setTimeout(()=>{ gbtn.disabled = false; gbtn.textContent = 'Sign in with Google'; }, 8000);
+    });
+  }
+
+  const nameBox = document.getElementById('gateName');
+  const existing = localStorage.getItem(PIN_KEY);
+  const isNew = !existing;
+  function stage(){
+    const user = window.DojoCloud ? window.DojoCloud.getState().user : null;
+    const named = !!getCallName();
+    if(cloud.configured && !user){
+      title.textContent = 'Sign in';
+      copy.textContent = 'Sign in with Google first.';
+      if(oauthBlock) oauthBlock.hidden = false;
+      if(nameBox) nameBox.hidden = true;
+      if(input) input.hidden = true;
+      btn.hidden = true;
+      btn.disabled = true;
+      return 'auth';
+    }
+    if(!named){
+      title.textContent = 'What should I call you?';
+      copy.textContent = 'This name is used in Sensei greetings.';
+      if(oauthBlock) oauthBlock.hidden = true;
+      if(nameBox){ nameBox.hidden = false; nameBox.focus(); }
+      if(input) input.hidden = true;
+      btn.hidden = false;
+      btn.disabled = false;
+      btn.textContent = 'Save name';
+      return 'name';
+    }
+    title.textContent = 'Unlock';
+    copy.textContent = 'Sign in password.';
+    if(oauthBlock) oauthBlock.hidden = true;
+    if(nameBox) nameBox.hidden = true;
+    if(input){ input.hidden = false; input.focus(); }
+    btn.hidden = false;
+    btn.disabled = false;
+    btn.textContent = 'Enter';
+    return 'pin';
+  }
+  const mode = stage();
+
+  async function submit(){
+    err.textContent = '';
+    const now = stage();
+    if(now==='auth') return;
+    if(now==='name'){
+      const n = (nameBox.value||'').trim();
+      if(n.length<2){ err.textContent = 'Type a name.'; return; }
+      localStorage.setItem(NAME_KEY, n);
+      stage();
+      return;
+    }
+    const pin = (input.value||'').trim();
+    if(pin.toLowerCase() !== 'maccam'){
+      err.textContent = 'Wrong password. Enter the password again.';
+      input.value = '';
+      input.focus();
+      return;
+    }
+    localStorage.setItem(PIN_KEY, await hashPin('maccam'));
+    hideGate();
+    applySenseiGreeting();
+  }
+
+  if(!btn.dataset.bound){
+    btn.dataset.bound = '1';
+    btn.addEventListener('click', submit);
+    input.addEventListener('keydown', (e)=>{ if(e.key==='Enter') submit(); });
+    if(nameBox) nameBox.addEventListener('keydown', (e)=>{ if(e.key==='Enter') submit(); });
+  }
+  setTimeout(()=>{ const vis = !nameBox.hidden ? nameBox : input; if(vis && !vis.hidden) vis.focus(); }, 50);
+}
+
+/* ---------------- INSTALL / EXPORT / IMPORT ---------------- */
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e)=>{
+  e.preventDefault();
+  deferredPrompt = e;
+  const btn = document.getElementById('btnInstall');
+  if(btn && document.body.classList.contains('unlocked')) btn.hidden = false;
+});
+document.getElementById('btnInstall').addEventListener('click', async ()=>{
+  if(!deferredPrompt){
+    alert('In Chrome or Edge: menu → Install Calc Dojo / Add to Home screen.');
+    return;
+  }
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice.catch(()=>{});
+  deferredPrompt = null;
+  document.getElementById('btnInstall').hidden = true;
+});
+
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('./sw.js').then((reg)=>{
+      try{ reg.update(); }catch(e){}
+    }).catch(()=>{});
+  });
+  let swRefreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', ()=>{
+    if(swRefreshing) return;
+    swRefreshing = true;
+    location.reload();
+  });
+}
+
+/* ---------------- AGGREGATES ---------------- */
+function totalSeconds(){ return DATA.sessions.reduce((s,x)=>s+x.seconds,0); }
+function secondsOnDate(d){ return DATA.sessions.filter(s=>s.date===d).reduce((s,x)=>s+x.seconds,0); }
+function studyDates(){ return new Set(DATA.sessions.map(s=>s.date)); }
+function currentStreak(){
+  const dates = studyDates();
+  let streak=0; let cur = new Date();
+  while(true){
+    const ds = fmtDate(cur);
+    if(dates.has(ds)){ streak++; cur.setDate(cur.getDate()-1); }
+    else break;
+  }
+  return streak;
+}
+function bestStreak(){
+  const dates = Array.from(studyDates()).sort();
+  if(dates.length===0) return 0;
+  let best=1, cur=1;
+  for(let i=1;i<dates.length;i++){
+    const prev = new Date(dates[i-1]), now = new Date(dates[i]);
+    const diff = Math.round((now-prev)/86400000);
+    if(diff===1){ cur++; best=Math.max(best,cur); } else cur=1;
+  }
+  return best;
+}
+function courseStats(course){
+  const ids = VIDEOS.filter(v=>v.course===course).map(v=>v.id);
+  const done = ids.filter(id=>DATA.videos[id] && DATA.videos[id].done).length;
+  return {done, total: ids.length};
+}
+function rankFor(hours){
+  if(hours>=200) return {name:'S — Sage', letter:'S'};
+  if(hours>=100) return {name:'A — Adept', letter:'A'};
+  if(hours>=50) return {name:'B — Disciple', letter:'B'};
+  if(hours>=25) return {name:'C — Apprentice', letter:'C'};
+  if(hours>=10) return {name:'D — Initiate', letter:'D'};
+  return {name:'E — Rookie', letter:'E'};
+}
+const RANK_THRESH = [0,10,25,50,100,200];
+
+/* ---------------- RENDER: DASHBOARD ---------------- */
+function toggleDone(id){
+  const cur = DATA.videos[id] || {};
+  cur.done = !cur.done;
+  cur.doneDate = cur.done ? todayStr() : null;
+  DATA.videos[id] = cur;
+  if(cur.done) rememberCompleted(id);
+  else if(Array.isArray(DATA.completedLog)) DATA.completedLog = DATA.completedLog.filter(x=>x.id!==id);
+  saveData();
+  renderAll();
+}
+
+function pickTodayQuest(){
+  const today = todayStr();
+  const scheduled = VIDEOS.filter(v=>DATA.videos[v.id] && DATA.videos[v.id].scheduledDate===today);
+  if(scheduled.length) return scheduled;
+  // auto: next 3 not-done videos in course/topic order
+  const notDone = VIDEOS.filter(v=> !(DATA.videos[v.id] && DATA.videos[v.id].done));
+  return notDone.slice(0,3);
+}
+
+function renderQuest(){
+  const list = pickTodayQuest();
+  document.getElementById('questCount').textContent = list.length;
+  const el = document.getElementById('questList');
+  if(list.length===0){
+    el.innerHTML = '<div class="empty-note">All caught up! Add more from the Archives.</div>';
+    return;
+  }
+  el.innerHTML = list.map(v=>{
+    const st = DATA.videos[v.id]||{};
+    return `<div class="quest-item">
+      <div class="quest-check ${st.done?'done':''}" data-id="${v.id}">${st.done?'✓':''}</div>
+      <div class="quest-info">
+        <div class="quest-title ${st.done?'done':''}">${escapeHtml(v.title)}</div>
+        <div class="quest-meta"><span class="quest-tag" style="background:${COURSE_COLOR[v.course]}20;color:${COURSE_COLOR[v.course]}">${COURSES[v.course]}</span> · ${escapeHtml(v.chapter)} · ${v.channel}</div>
+      </div>
+      <button type="button" class="quest-link" data-play="${v.id}" title="Play lecture">▶</button>
+    </div>`;
+  }).join('');
+  el.querySelectorAll('.quest-check').forEach(elm=>elm.addEventListener('click',()=>toggleDone(elm.dataset.id)));
+  bindPlayButtons(el);
+}
+
+function renderCourseBars(targetId){
+  const el = document.getElementById(targetId);
+  el.innerHTML = [1,2,3,4].map(c=>{
+    const {done,total} = courseStats(c);
+    const pct = total? Math.round(done/total*100):0;
+    return `<div class="course-bar">
+      <div class="cb-top"><b style="color:${COURSE_COLOR[c]}">${COURSES[c]}</b><span>${done}/${total} (${pct}%)</span></div>
+      <div class="cb-track"><div class="cb-fill" style="width:${pct}%;background:${COURSE_COLOR[c]}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function renderDashboardStats(){
+  const tot = totalSeconds();
+  document.getElementById('statToday').textContent = fmtHM(secondsOnDate(todayStr()));
+  document.getElementById('statStreak').textContent = currentStreak();
+  document.getElementById('statTotal').textContent = (tot/3600).toFixed(1)+'h';
+  document.getElementById('todayDateLabel').textContent = new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
+
+  const hours = tot/3600;
+  const rank = rankFor(hours);
+  document.getElementById('sideRankBadge').textContent = rank.letter;
+  document.getElementById('sideRankName').textContent = rank.name.split(' — ')[1];
+  document.getElementById('sideRankHours').textContent = hours.toFixed(1)+'h total';
+}
+
+/* ---------------- RENDER: CALENDAR ---------------- */
+let calCursor = new Date(); calCursor.setDate(1);
+let selectedDay = todayStr();
+
+function renderCalendar(){
+  const label = calCursor.toLocaleDateString(undefined,{month:'long',year:'numeric'});
+  document.getElementById('calMonthLabel').textContent = label;
+  const grid = document.getElementById('calGrid');
+  const dows = ['S','M','T','W','T','F','S'];
+  let html = dows.map(d=>`<div class="cal-dow">${d}</div>`).join('');
+
+  const year = calCursor.getFullYear(), month = calCursor.getMonth();
+  const firstDow = new Date(year,month,1).getDay();
+  const daysInMonth = new Date(year,month+1,0).getDate();
+  const maxSec = Math.max(1, ...Array.from({length:daysInMonth},(_,i)=>secondsOnDate(fmtDate(new Date(year,month,i+1)))));
+
+  for(let i=0;i<firstDow;i++) html += '<div class="cal-cell empty"></div>';
+  for(let d=1; d<=daysInMonth; d++){
+    const dateObj = new Date(year,month,d);
+    const ds = fmtDate(dateObj);
+    const sec = secondsOnDate(ds);
+    const isToday = ds===todayStr();
+    const isSel = ds===selectedDay;
+    const scheduledCount = VIDEOS.filter(v=>DATA.videos[v.id] && DATA.videos[v.id].scheduledDate===ds).length;
+    const doneVideos = VIDEOS.filter(v=>DATA.videos[v.id] && DATA.videos[v.id].doneDate===ds);
+    const doneCount = doneVideos.length;
+    
+    // Get unique chapters for completed videos (short format)
+    const chapters = [...new Set(doneVideos.map(v=>v.chapter))];
+    const chapterTags = chapters.slice(0,3).map(ch => 
+      `<span class="cal-topic" style="background:${COURSE_COLOR[doneVideos.find(v=>v.chapter===ch)?.course]||'var(--line)'}20;color:${COURSE_COLOR[doneVideos.find(v=>v.chapter===ch)?.course]||'var(--text)'}">${escapeHtml(ch)}</span>`
+    ).join('');
+
+    let fillPct = 0;
+    let isComplete = false;
+    if(scheduledCount > 0){
+      const scheduledAndDone = VIDEOS.filter(v=>DATA.videos[v.id] && DATA.videos[v.id].scheduledDate===ds && DATA.videos[v.id].done).length;
+      fillPct = Math.min(100, Math.round((scheduledAndDone / scheduledCount) * 100));
+      isComplete = scheduledAndDone >= scheduledCount;
+    }
+
+    html += `<div class="cal-cell ${isToday?'today':''} ${isSel?'selected':''}" data-date="${ds}">
+      <div class="cal-daynum">${d}</div>
+      <div class="cal-heat" title="${fillPct}% complete">
+        <div class="cal-heat-fill ${fillPct>0?'has':''} ${isComplete?'complete':''}" style="width:${fillPct}%;"></div>
+      </div>
+      <div class="cal-dots">${scheduledCount?'<span style="background:var(--gold)"></span>':''}</div>
+      <div class="cal-topics">${chapterTags}</div>
+    </div>`;
+  }
+  grid.innerHTML = html;
+  grid.querySelectorAll('.cal-cell[data-date]').forEach(c=>c.addEventListener('click',()=>{
+    selectedDay = c.dataset.date;
+    renderCalendar();
+    renderDayDetail();
+    openDayDetailModal(selectedDay);
+  }));
+  renderDayDetail();
+}
+
+function getDayData(ds){
+  const dObj = new Date(ds+'T00:00:00');
+  const sec = secondsOnDate(ds);
+  const done = VIDEOS.filter(v=>DATA.videos[v.id] && DATA.videos[v.id].doneDate===ds);
+  const scheduled = VIDEOS.filter(v=>DATA.videos[v.id] && DATA.videos[v.id].scheduledDate===ds);
+  return { dObj, sec, done, scheduled };
+}
+
+function renderDayDetailHtml(ds){
+  const { dObj, sec, done, scheduled } = getDayData(ds);
+  const dateFormatted = dObj.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  
+  // Separate scheduled into pending (not done) and completed
+  const pending = scheduled.filter(v => !(DATA.videos[v.id] && DATA.videos[v.id].done));
+  const scheduledDone = scheduled.filter(v => DATA.videos[v.id] && DATA.videos[v.id].done);
+  const otherDone = done.filter(v => !(DATA.videos[v.id] && DATA.videos[v.id].scheduledDate === ds));
+  
+  let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+    <div class="dd-title" style="margin-bottom:0;">${dateFormatted}</div>
+    <span class="quest-tag" style="background:var(--surface);border:1px solid var(--line);color:var(--cyan);font-family:'JetBrains Mono';font-size:11px;">⏱ ${fmtHM(sec)} invested</span>
+  </div>`;
+  
+  if(pending.length){
+    html += `<div style="font-family:'Rajdhani';font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--gold);margin:14px 0 8px;display:flex;align-items:center;gap:6px;">
+      <span>📅</span> Pending Lectures (${pending.length})
+    </div>`;
+    pending.forEach(v=>{
+      const st = DATA.videos[v.id]||{};
+      html += `<div class="quest-item" style="border:1px solid var(--line);border-radius:10px;margin-bottom:6px;background:var(--surface);padding:8px 10px;">
+        <div class="quest-check ${st.done?'done':''}" data-action="toggle" data-id="${v.id}" title="Toggle completed">${st.done?'✓':''}</div>
+        <div class="quest-info">
+          <div class="quest-title ${st.done?'done':''}">${escapeHtml(v.title)}</div>
+          <div class="quest-meta"><span class="quest-tag" style="background:${COURSE_COLOR[v.course]}20;color:${COURSE_COLOR[v.course]}">${COURSES[v.course]}</span> · ${escapeHtml(v.chapter)} · ${v.channel}</div>
+        </div>
+        <button class="icon-btn unsched-btn" data-action="unschedule" data-id="${v.id}" title="Remove from archive" style="width:26px;height:26px;font-size:12px;color:var(--danger);border-color:transparent;background:transparent;flex-shrink:0;cursor:pointer;">✕</button>
+        <button type="button" class="quest-link" data-play="${v.id}" title="Play lecture">▶</button>
+      </div>`;
+    });
+  }
+  
+  const completedCount = scheduledDone.length + otherDone.length;
+  if(completedCount > 0){
+    html += `<div style="font-family:'Rajdhani';font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--cyan);margin:16px 0 8px;display:flex;align-items:center;gap:6px;">
+      <span>✓</span> Mastered Lectures (${completedCount})
+    </div>`;
+    [...scheduledDone, ...otherDone].forEach(v=>{
+      const st = DATA.videos[v.id]||{};
+      html += `<div class="quest-item" style="border:1px solid var(--line);border-radius:10px;margin-bottom:6px;background:var(--surface);padding:8px 10px;">
+        <div class="quest-check done" data-action="toggle" data-id="${v.id}" title="Mark not completed">✓</div>
+        <div class="quest-info">
+          <div class="quest-title done">${escapeHtml(v.title)}</div>
+          <div class="quest-meta"><span class="quest-tag" style="background:${COURSE_COLOR[v.course]}20;color:${COURSE_COLOR[v.course]}">${COURSES[v.course]}</span> · ${escapeHtml(v.chapter)} · ${v.channel}</div>
+        </div>
+        <button type="button" class="quest-link" data-play="${v.id}" title="Play lecture">▶</button>
+      </div>`;
+    });
+  }
+  
+  if(!pending.length && completedCount === 0){
+    html += `<div class="empty-note" style="padding:22px 10px;text-align:center;">
+      <div style="font-size:22px;margin-bottom:4px;">📅</div>
+      <div>No lectures archived or mastered on this date.</div>
+      ${sec>0 ? `<div style="margin-top:6px;color:var(--cyan);font-size:12px;">Logged <b>${fmtHM(sec)}</b> of focus timer.</div>` : ''}
+    </div>`;
+  }
+  
+  return html;
+}
+
+function bindDayItemEvents(container){
+  bindPlayButtons(container);
+  container.querySelectorAll('[data-action="toggle"]').forEach(el=>{
+    el.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      toggleDone(el.dataset.id);
+      renderCalendar();
+      renderDayDetail();
+      if(document.getElementById('dayDetailModal').classList.contains('active')){
+        renderDayModal();
+      }
+    });
+  });
+  container.querySelectorAll('[data-action="unschedule"]').forEach(el=>{
+    el.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      const vData = DATA.videos[el.dataset.id] || {};
+      delete vData.scheduledDate;
+      DATA.videos[el.dataset.id] = vData;
+      saveData();
+      renderAll();
+      if(document.getElementById('dayDetailModal').classList.contains('active')){
+        renderDayModal();
+      }
+    });
+  });
+}
+
+function renderDayDetail(){
+  const el = document.getElementById('dayDetail');
+  if(!el) return;
+  el.innerHTML = renderDayDetailHtml(selectedDay);
+  bindDayItemEvents(el);
+}
+
+function openDayDetailModal(ds){
+  selectedDay = ds;
+  renderDayModal();
+  document.getElementById('dayDetailModal').classList.add('active');
+}
+
+function closeDayDetailModal(){
+  const modal = document.getElementById('dayDetailModal');
+  if(modal) modal.classList.remove('active');
+}
+
+function renderDayModal(){
+  const { dObj, sec, done, scheduled } = getDayData(selectedDay);
+  const dateFormatted = dObj.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  
+  const pending = scheduled.filter(v => !(DATA.videos[v.id] && DATA.videos[v.id].done));
+  const scheduledDone = scheduled.filter(v => DATA.videos[v.id] && DATA.videos[v.id].done);
+  const otherDone = done.filter(v => !(DATA.videos[v.id] && DATA.videos[v.id].scheduledDate === selectedDay));
+  const completedCount = scheduledDone.length + otherDone.length;
+  
+  document.getElementById('dayModalTitle').textContent = dateFormatted;
+  document.getElementById('dayModalHours').textContent = `${fmtHM(sec)} invested · ${pending.length} pending · ${completedCount} mastered`;
+  
+  const contentEl = document.getElementById('dayModalContent');
+  contentEl.innerHTML = renderDayDetailHtml(selectedDay);
+  bindDayItemEvents(contentEl);
+}
+
+document.getElementById('calPrev').addEventListener('click',()=>{calCursor.setMonth(calCursor.getMonth()-1); renderCalendar();});
+document.getElementById('calNext').addEventListener('click',()=>{calCursor.setMonth(calCursor.getMonth()+1); renderCalendar();});
+document.getElementById('calToday').addEventListener('click',()=>{calCursor=new Date(); calCursor.setDate(1); selectedDay=todayStr(); renderCalendar();});
+
+/* ---------------- RENDER: LIBRARY ---------------- */
+let libFilter = 'all';
+let libSearch = '';
+let openChapters = new Set();
+let pendingScheduleDate = null;
+
+let schedulingVideoId = null;
+let modalCalCursor = new Date(); modalCalCursor.setDate(1);
+
+function scheduleVideo(id){
+  schedulingVideoId = id;
+  const video = VIDEO_BY_ID[id];
+  if(!video) return;
+  const cur = DATA.videos[id] || {};
+  
+  document.getElementById('modalVideoTitle').textContent = `${video.title} (${COURSES[video.course]} · ${video.chapter})`;
+  
+  if(cur.scheduledDate){
+    modalCalCursor = new Date(cur.scheduledDate + 'T00:00:00');
+    modalCalCursor.setDate(1);
+    document.getElementById('modalClearBtn').style.display = 'inline-block';
+  } else {
+    modalCalCursor = new Date();
+    modalCalCursor.setDate(1);
+    document.getElementById('modalClearBtn').style.display = 'none';
+  }
+  
+  renderModalCalendar();
+  document.getElementById('scheduleModal').classList.add('active');
+}
+
+function closeScheduleModal(){
+  const modal = document.getElementById('scheduleModal');
+  if(modal) modal.classList.remove('active');
+  schedulingVideoId = null;
+}
+
+function renderModalCalendar(){
+  const label = modalCalCursor.toLocaleDateString(undefined,{month:'long',year:'numeric'});
+  document.getElementById('modalCalMonth').textContent = label;
+  const grid = document.getElementById('modalCalGrid');
+  const dows = ['S','M','T','W','T','F','S'];
+  let html = dows.map(d=>`<div class="cal-dow">${d}</div>`).join('');
+
+  const year = modalCalCursor.getFullYear(), month = modalCalCursor.getMonth();
+  const firstDow = new Date(year,month,1).getDay();
+  const daysInMonth = new Date(year,month+1,0).getDate();
+  
+  const cur = schedulingVideoId ? (DATA.videos[schedulingVideoId] || {}) : {};
+  const currentSchedDate = cur.scheduledDate || null;
+
+  for(let i=0;i<firstDow;i++) html += '<div class="modal-cal-cell empty"></div>';
+  for(let d=1; d<=daysInMonth; d++){
+    const dateObj = new Date(year,month,d);
+    const ds = fmtDate(dateObj);
+    const isToday = ds===todayStr();
+    const isSched = ds===currentSchedDate;
+
+    html += `<div class="modal-cal-cell ${isToday?'today':''} ${isSched?'scheduled':''}" data-date="${ds}" title="Archive to ${ds}">
+      <span class="modal-daynum">${d}</span>
+    </div>`;
+  }
+  grid.innerHTML = html;
+  grid.querySelectorAll('.modal-cal-cell[data-date]').forEach(c=>{
+    c.addEventListener('click',()=>{
+      if(!schedulingVideoId) return;
+      const chosenDate = c.dataset.date;
+      const vData = DATA.videos[schedulingVideoId] || {};
+      vData.scheduledDate = chosenDate;
+      DATA.videos[schedulingVideoId] = vData;
+      saveData();
+      renderAll();
+      closeScheduleModal();
+    });
+  });
+}
+
+function renderLibrary(){
+  const el = document.getElementById('libraryContainer');
+  const q = libSearch.trim().toLowerCase();
+  let chapters = CHAPTERS.filter(ch => libFilter==='all' || ch.course===parseInt(libFilter,10));
+  let html = '';
+  chapters.forEach(ch=>{
+    let vids = ch.ids.map(id=>VIDEO_BY_ID[id]);
+    if(q) vids = vids.filter(v=> v.title.toLowerCase().includes(q) || ch.name.toLowerCase().includes(q));
+    if(vids.length===0) return;
+    const doneCount = vids.filter(v=>DATA.videos[v.id]&&DATA.videos[v.id].done).length;
+    const key = `${ch.course}|${ch.name}`;
+    const isOpen = openChapters.has(key);
+    html += `<div class="chapter-group${isOpen ? ' open' : ''}" data-key="${key}">
+      <div class="chapter-head">
+        <div class="chapter-name"><span class="chapter-dot" style="background:${COURSE_COLOR[ch.course]}"></span>${COURSES[ch.course]} &#183; ${escapeHtml(ch.name)}</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="chapter-progress">${doneCount}/${vids.length}</span>
+          <span class="chapter-arrow">&#x25BE;</span>
+        </div>
+      </div>
+      <div class="chapter-body">
+        ${vids.map(v=>{
+          const st = DATA.videos[v.id]||{};
+          return `<div class="video-row" data-id="${v.id}">
+            <div class="quest-check ${st.done?'done':''}" data-id="${v.id}">${st.done?'&#x2713;':''}</div>
+            <div class="video-title ${st.done?'done':''}">${escapeHtml(v.title)} <span style="color:var(--text-dim);font-size:11px;">(${v.channel})</span></div>
+            ${st.scheduledDate ? `<span class="sched-tag">&#x1F4C5; ${st.scheduledDate}</span>` : ''}
+            <button class="schedule-btn" data-id="${v.id}" title="Schedule">&#x1F4C5;</button>
+            <button type="button" class="quest-link" data-play="${v.id}" title="Play lecture">&#x25B6;</button>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  });
+el.innerHTML = html || '<div class="empty-note">No videos match your search.</div>';
+
+  el.querySelectorAll('.chapter-head').forEach(h=>{
+    h.addEventListener('click',()=>{
+      const group = h.parentElement;
+      const key = group.dataset.key;
+      group.classList.toggle('open');
+      if(group.classList.contains('open')) openChapters.add(key);
+      else openChapters.delete(key);
+    });
+  });
+  el.querySelectorAll('.quest-check').forEach(c=>c.addEventListener('click',(e)=>{e.stopPropagation(); toggleDone(c.dataset.id);}));
+  el.querySelectorAll('.schedule-btn').forEach(b=>b.addEventListener('click',(e)=>{e.stopPropagation(); scheduleVideo(b.dataset.id);}));
+  bindPlayButtons(el);
+
+  el.querySelectorAll('.video-row').forEach(row=>{
+    const vid = row.dataset.id;
+    row.style.cursor = 'pointer';
+    row.addEventListener('mouseenter',()=>{
+      row.style.background = pendingScheduleDate ? 'rgba(127,223,255,0.15)' : 'rgba(0,229,255,0.08)';
+    });
+    row.addEventListener('mouseleave',()=>{ row.style.background = ''; });
+    row.addEventListener('click',(e)=>{
+      if(e.target.closest('.quest-check') || e.target.closest('.schedule-btn')) return;
+      if(pendingScheduleDate) scheduleLectureToDate(vid, pendingScheduleDate);
+      else playLecture(vid);
+    });
+  });
+}
+
+function handleEscClear(e){
+  if(e.key === 'Escape') clearPendingSchedule();
+}
+
+document.getElementById('libSearch').addEventListener('input',(e)=>{libSearch=e.target.value; renderLibrary();});
+document.getElementById('courseChips').addEventListener('click',(e)=>{
+  if(!e.target.classList.contains('chip')) return;
+  document.querySelectorAll('#courseChips .chip').forEach(c=>c.classList.remove('active'));
+  e.target.classList.add('active');
+  libFilter = e.target.dataset.c;
+  renderLibrary();
+});
+
+/* ---------------- RENDER: STATS ---------------- */
+function renderStats(){
+  const hours = totalSeconds()/3600;
+  const rank = rankFor(hours);
+  document.getElementById('rankBig').textContent = rank.letter;
+  document.getElementById('rankNameBig').textContent = rank.name;
+  document.getElementById('rankHoursBig').textContent = hours.toFixed(1)+' hours logged';
+  const nextIdx = RANK_THRESH.findIndex(t=>t>hours);
+  document.getElementById('rankNextBig').innerHTML = nextIdx===-1 ? 'Max rank achieved 🏆' : `<b>${(RANK_THRESH[nextIdx]-hours).toFixed(1)}h</b> to next rank`;
+  renderCourseBars('courseBars2');
+
+  const doneTotal = VIDEOS.filter(v=>DATA.videos[v.id]&&DATA.videos[v.id].done).length;
+  document.getElementById('statVideosDone').textContent = doneTotal;
+  document.getElementById('statVideosTotal').textContent = VIDEOS.length;
+  document.getElementById('statSessions').textContent = DATA.sessions.length;
+  document.getElementById('statBestStreak').textContent = bestStreak();
+}
+
+/* ---------------- NAV ---------------- */
+document.querySelectorAll('.nav-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    if(document.body.classList.contains('player-on')){
+      pauseYoutube();
+      setPlayerExpanded(false);
+    }
+    document.body.classList.remove('flames-off');
+    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    document.getElementById('view-'+btn.dataset.view).classList.add('active');
+    document.body.classList.toggle('on-dashboard', btn.dataset.view==='dashboard');
+    if(btn.dataset.view==='sensei') applySenseiGreeting();
+    if(btn.dataset.view === 'library'){
+      clearPendingSchedule();
+      renderLibrary();
+    }
+  });
+});
+
+/* ---------------- SCHEDULE MODAL LISTENERS ---------------- */
+document.getElementById('modalCalPrev').addEventListener('click',()=>{ modalCalCursor.setMonth(modalCalCursor.getMonth()-1); renderModalCalendar(); });
+document.getElementById('modalCalNext').addEventListener('click',()=>{ modalCalCursor.setMonth(modalCalCursor.getMonth()+1); renderModalCalendar(); });
+document.getElementById('modalCalToday').addEventListener('click',()=>{ modalCalCursor = new Date(); modalCalCursor.setDate(1); renderModalCalendar(); });
+document.getElementById('modalCloseBtn').addEventListener('click', closeScheduleModal);
+document.getElementById('modalCancelBtn').addEventListener('click', closeScheduleModal);
+document.getElementById('modalClearBtn').addEventListener('click',()=>{
+  if(!schedulingVideoId) return;
+  const vData = DATA.videos[schedulingVideoId] || {};
+  delete vData.scheduledDate;
+  DATA.videos[schedulingVideoId] = vData;
+  saveData();
+  renderAll();
+  closeScheduleModal();
+});
+/* ---------------- DAY DETAIL MODAL LISTENERS ---------------- */
+document.getElementById('dayModalCloseBtn').addEventListener('click', closeDayDetailModal);
+document.getElementById('dayModalCloseBtn2').addEventListener('click', closeDayDetailModal);
+document.getElementById('dayModalGoLib').addEventListener('click',()=>{
+  pendingScheduleDate = selectedDay;
+  closeDayDetailModal();
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  const libNav = document.querySelector('.nav-btn[data-view="library"]');
+  if(libNav) libNav.classList.add('active');
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  const libView = document.getElementById('view-library');
+  if(libView) libView.classList.add('active');
+  document.body.classList.remove('on-dashboard');
+  document.body.classList.add('schedule-mode');
+  const hint = document.getElementById('libHint');
+  if(hint) hint.textContent = 'Scheduling for ' + selectedDay + ' — tap a lecture to add it. Videos will not play.';
+});
+document.getElementById('dayDetailModal').addEventListener('click',(e)=>{
+  if(e.target.id==='dayDetailModal') closeDayDetailModal();
+});
+document.addEventListener('keydown',(e)=>{
+  if(e.key==='Escape'){
+    closeScheduleModal();
+    closeDayDetailModal();
+  }
+});
+
+/* ---------------- UTIL ---------------- */
+function escapeHtml(s){ return s.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function clearPendingSchedule(){
+  pendingScheduleDate = null;
+  document.body.classList.remove('schedule-mode');
+  const hint = document.getElementById('libHint');
+  if(hint) hint.textContent = 'Every lecture. Track it. Schedule it. Conquer it.';
+}
+
+/* ---------------- LOGO / FAVICON ---------------- */
+const LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+<defs>
+<linearGradient id="flameGrad" x1="0" y1="1" x2="0" y2="0">
+<stop offset="0%" stop-color="#0a1636"/>
+<stop offset="45%" stop-color="#3b6bff"/>
+<stop offset="100%" stop-color="#00e5ff"/>
+</linearGradient>
+<filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+<feGaussianBlur stdDeviation="2.2" result="b"/>
+<feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+</filter>
+</defs>
+<rect x="2" y="2" width="96" height="96" rx="22" fill="#03050c" stroke="#1a2c52" stroke-width="2"/>
+<path filter="url(#glow)" fill="url(#flameGrad)" d="M50 10 C36 26 28 33 28 52 C28 70 38 82 50 82 C62 82 72 70 72 52 C72 39 65 33 60 24 C61 37 54 40 52 33 C50 25 55 19 50 10 Z"/>
+<text x="50" y="61" font-family="Georgia, serif" font-size="32" font-weight="700" fill="#03050c" text-anchor="middle">&#8747;</text>
+</svg>`;
+document.getElementById('faviconLink').href = 'data:image/svg+xml,' + encodeURIComponent(LOGO_SVG);
+document.getElementById('brandLogo').outerHTML = LOGO_SVG.replace('<svg ', '<svg id="brandLogo" width="42" height="42" style="margin-bottom:6px;filter:drop-shadow(0 0 10px rgba(0,229,255,.5));" ');
+
+/* ---------------- FIRE SIMULATION (canvas) ---------------- */
+(function initFire(){
+  const canvas = document.getElementById('fireCanvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d', { alpha: true });
+  const glow = document.getElementById('fireGlow');
+
+  const FW = 180;
+  const FH = 110;
+  const MAXI = 48;
+  const fire = new Uint8Array(FW * FH);
+
+  const off = document.createElement('canvas');
+  off.width = FW; off.height = FH;
+  const offCtx = off.getContext('2d');
+  const imgData = offCtx.createImageData(FW, FH);
+
+  function lerp(a,b,t){ return a+(b-a)*t; }
+  function mixColor(c1,c2,t){
+    return [lerp(c1[0],c2[0],t)|0, lerp(c1[1],c2[1],t)|0, lerp(c1[2],c2[2],t)|0];
+  }
+
+  // Video-like electric blue: deep navy -> royal -> cyan -> white-hot core
+  const stops = [
+    {i:0,  c:[0,0,0],        a:0},
+    {i:4,  c:[2,8,28],       a:20},
+    {i:10, c:[0,30,90],      a:70},
+    {i:16, c:[0,70,180],     a:130},
+    {i:24, c:[0,140,255],    a:185},
+    {i:32, c:[20,210,255],   a:220},
+    {i:40, c:[160,245,255],  a:240},
+    {i:48, c:[240,252,255],  a:250}
+  ];
+  const PAL = [];
+  for(let i=0;i<=MAXI;i++){
+    let s0=stops[0], s1=stops[stops.length-1];
+    for(let k=0;k<stops.length-1;k++){
+      if(i>=stops[k].i && i<=stops[k+1].i){ s0=stops[k]; s1=stops[k+1]; break; }
+    }
+    const t = s1.i===s0.i ? 0 : (i-s0.i)/(s1.i-s0.i);
+    const rgb = mixColor(s0.c, s1.c, t);
+    PAL.push([rgb[0],rgb[1],rgb[2], lerp(s0.a,s1.a,t)|0]);
+  }
+
+  // 15s cycle: simmer -> climb -> roar -> settle. Never dies.
+  function surge(now){
+    const t = (now / 1000) % 15;
+    let u;
+    if(t < 5) u = 0.08 * (t / 5);                 // low simmer
+    else if(t < 8.5) u = 0.08 + 0.92 * ((t-5)/3.5); // climb
+    else if(t < 11) u = 1;                           // roar
+    else u = 1 - 0.92 * ((t-11)/4);                  // settle back to simmer
+    // ease
+    u = u*u*(3-2*u);
+    return 0.42 + 0.58 * u;
+  }
+
+  function seedBase(heat){
+    for(let x=0;x<FW;x++){
+      const n = 0.72 + 0.28 * Math.sin(x * 0.17 + performance.now()*0.002);
+      const center = 1 - Math.abs((x/(FW-1))*2-1)*0.22;
+      const raw = MAXI * heat * n * center;
+      const jitter = (Math.random()*8 - 2);
+      fire[(FH-1)*FW + x] = Math.max(18, Math.min(MAXI, raw + jitter));
+      // extra hot pockets so tongues fork like real fire
+      if(Math.random() < 0.08 * heat) fire[(FH-1)*FW + x] = MAXI;
+    }
+  }
+
+  function step(heat){
+    // spread heat upward with lateral flicker; less decay when roaring = taller flames
+    const climb = 1 + heat * 0.85;
+    for(let y=1;y<FH;y++){
+      for(let x=0;x<FW;x++){
+        const src = fire[y*FW + x];
+        if(src === 0){
+          fire[(y-1)*FW + x] = 0;
+          continue;
+        }
+        const wind = (Math.random()*3)|0; // 0,1,2
+        let nx = x + wind - 1;
+        if(nx < 0) nx = 0;
+        if(nx >= FW) nx = FW-1;
+        const decay = (Math.random() < (0.48 - heat*0.30)) ? 1 : 0;
+        const extra = (Math.random() < 0.10) ? 1 : 0;
+        const next = Math.max(0, (src - decay - extra) * (y > FH-8 ? 1 : 0.998));
+        fire[(y-1)*FW + nx] = Math.min(MAXI, next);
+      }
+    }
+    // extra upward lift during surge
+    if(heat > 0.7){
+      for(let i=0;i<(heat*14)|0;i++){
+        const x = (Math.random()*FW)|0;
+        const y = FH - 2 - ((Math.random()*6)|0);
+        const idx = y*FW + x;
+        fire[idx] = Math.min(MAXI, fire[idx] + 8);
+      }
+    }
+    seedBase(heat);
+  }
+
+  function renderFireBitmap(){
+    const d = imgData.data;
+    for(let p=0;p<FW*FH;p++){
+      const c = PAL[fire[p]];
+      const o = p*4;
+      d[o]=c[0]; d[o+1]=c[1]; d[o+2]=c[2]; d[o+3]=c[3];
+    }
+    offCtx.putImageData(imgData,0,0);
+  }
+
+  const smoke = [];
+  const MAX_SMOKE = 42;
+  const emberCanvas = document.getElementById('emberCanvas');
+  const ectx = emberCanvas ? emberCanvas.getContext('2d', { alpha: true }) : null;
+  const embers = [];
+  const MAX_EMBERS = 90;
+
+  function spawnEmber(sw, sh, heat){
+    if(embers.length >= MAX_EMBERS) return;
+    embers.push({
+      x: sw * (0.08 + Math.random()*0.84),
+      y: sh * (0.78 + Math.random()*0.2),
+      vx: (Math.random()-0.5) * 0.22,
+      vy: -(0.7 + Math.random()*1.8 + heat*1.2),
+      life: 1,
+      decay: 0.002 + Math.random()*0.0035,
+      size: 0.35 + Math.random()*0.85,
+      tw: Math.random()*Math.PI*2
+    });
+  }
+
+  function spawnSmoke(w, h, heat){
+    if(smoke.length >= MAX_SMOKE) return;
+    smoke.push({
+      x: w * (0.1 + Math.random()*0.8),
+      y: h * (0.55 + Math.random()*0.35),
+      vx: (Math.random()-0.5) * 0.18,
+      vy: -(0.12 + Math.random()*0.22),
+      life: 1,
+      decay: 0.0022 + Math.random()*0.0028,
+      size: 18 + Math.random()*34 + heat*10
+    });
+  }
+
+  function resize(){
+    const r = canvas.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.max(1, r.width * dpr);
+    canvas.height = Math.max(1, r.height * dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    if(emberCanvas && ectx){
+      emberCanvas.width = Math.max(1, window.innerWidth * dpr);
+      emberCanvas.height = Math.max(1, window.innerHeight * dpr);
+      ectx.setTransform(dpr,0,0,dpr,0,0);
+    }
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // prime the field so first frame is already lit
+  for(let i=0;i<40;i++){ seedBase(0.55); step(0.55); }
+
+  function loop(now){
+    const heat = surge(now);
+    step(heat);
+    if((now/16|0)%2===0) step(heat); // extra tick so tongues move fast enough
+    renderFireBitmap();
+
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+    ctx.clearRect(0,0,w,h);
+
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 0.96;
+    ctx.drawImage(off, 0, 0, FW, FH, 0, 0, w, h);
+
+    const smokeChance = 0.16 + heat * 0.2;
+    if(Math.random() < smokeChance) spawnSmoke(w,h,heat);
+    ctx.globalCompositeOperation = 'screen';
+    for(let i=smoke.length-1;i>=0;i--){
+      const s = smoke[i];
+      s.x += s.vx;
+      s.y += s.vy;
+      s.life -= s.decay;
+      s.size += 0.12;
+      if(s.life <= 0 || s.y < -40){ smoke.splice(i,1); continue; }
+      const g = ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.size);
+      g.addColorStop(0, 'rgba(120,190,230,' + (0.04 * s.life) + ')');
+      g.addColorStop(1, 'rgba(80,140,200,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(s.x,s.y,s.size,0,Math.PI*2);
+      ctx.fill();
+    }
+
+    if(ectx){
+      ectx.clearRect(0,0,window.innerWidth,window.innerHeight);
+      const sw = window.innerWidth, sh = window.innerHeight;
+      const n = (1 + heat*2) | 0;
+      for(let i=0;i<n;i++) spawnEmber(sw,sh,heat);
+      ectx.globalCompositeOperation = 'lighter';
+      for(let i=embers.length-1;i>=0;i--){
+        const e = embers[i];
+        e.tw += 0.08;
+        e.x += e.vx + Math.sin(e.tw)*0.12;
+        e.y += e.vy;
+        e.vy -= 0.01;
+        e.life -= e.decay;
+        if(e.life<=0 || e.y < -20){ embers.splice(i,1); continue; }
+        const a = e.life;
+        ectx.fillStyle = 'rgba(170,240,255,' + (0.55*a) + ')';
+        ectx.beginPath();
+        ectx.arc(e.x, e.y, e.size*a, 0, Math.PI*2);
+        ectx.fill();
+      }
+      ectx.globalCompositeOperation = 'source-over';
+    }
+
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+
+    if(glow){
+      glow.style.opacity = String(0.35 + heat * 0.65);
+    }
+
+    if(!reduceMotion) requestAnimationFrame(loop);
+  }
+
+  if(reduceMotion){
+    seedBase(0.55); step(0.55); renderFireBitmap();
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    ctx.drawImage(off, 0, 0, FW, FH, 0, 0, w, h);
+  } else {
+    requestAnimationFrame(loop);
+  }
+})();
+
+/* ---------------- CLOCK WIDGET ---------------- */
+function updateClockWidget(){
+  const now = new Date();
+  document.getElementById('clockTime').textContent = now.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  document.getElementById('clockDate').textContent = now.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+}
+updateClockWidget();
+setInterval(updateClockWidget, 1000);
+
+/* ---------------- GREETINGS (new roll every page load) ---------------- */
+const HEADLINE_PHRASES = [
+  "Sensei's cooking",
+  "Derivative dojo drip",
+  "Integral incoming",
+  "Black belt in calc",
+  "No cap, that's the limit",
+  "Sharpening the pencil",
+  "Grinding the gains",
+  "Locked into the proof",
+  "W in the workbook",
+  "Chain rule, no chill",
+  "Built different (differentiable)",
+  "Say less, solve more"
+]
+
+const SIDEBAR_PHRASES = [
+  "Ready to begin?",
+  "Light it up",
+  "Back for more",
+  "Keep going",
+  "The path is open",
+  "Forge ahead",
+  "One more theorem",
+  "Quiet focus",
+  "Stay sharp",
+  "Lock in"
+];
+
+function pickRandom(list){
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+let headlinePhrase = pickRandom(HEADLINE_PHRASES);
+let sidebarPhrase = pickRandom(SIDEBAR_PHRASES);
+
+function applyGreetings(){
+  const h = document.getElementById('dailyPhrase');
+  const s = document.getElementById('brandSub');
+  if(h) h.textContent = headlinePhrase;
+  if(s) s.textContent = sidebarPhrase;
+}
+
+/* ---------------- INIT ---------------- */
+function rememberOpened(id){
+  if(!id) return;
+  if(!Array.isArray(DATA.opened)) DATA.opened = [];
+  DATA.opened = [{ id, at: Date.now() }, ...DATA.opened.filter(x=>x.id!==id)].slice(0,5);
+  saveData();
+  renderHistory();
+}
+
+function rememberCompleted(id){
+  if(!id) return;
+  if(!Array.isArray(DATA.completedLog)) DATA.completedLog = [];
+  DATA.completedLog = [{ id, at: Date.now() }, ...DATA.completedLog.filter(x=>x.id!==id)].slice(0,5);
+}
+
+function fmtStamp(ms){
+  const d = new Date(ms);
+  if(isNaN(d)) return '—';
+  return d.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}) + ' · ' + d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+}
+
+function renderHistoryList(elId, rows){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  if(!rows || !rows.length){
+    el.innerHTML = '<div class="empty-note">Nothing here yet.</div>';
+    return;
+  }
+  el.innerHTML = rows.map(row=>{
+    const v = VIDEO_BY_ID[row.id];
+    const title = v ? v.title : row.id;
+    const meta = v ? (COURSES[v.course] + ' · ' + v.chapter) : '';
+    return '<div class="hist-row" data-play="'+row.id+'"><div><div class="hist-title">'+title+'</div><div class="hist-meta">'+meta+'</div></div><div class="hist-when">'+fmtStamp(row.at)+'</div></div>';
+  }).join('');
+  bindPlayButtons(el);
+}
+
+function renderHistory(){
+  const opened = Array.isArray(DATA.opened) ? DATA.opened.slice(0,5) : [];
+  const done = Array.isArray(DATA.completedLog) ? DATA.completedLog.slice(0,5) : [];
+  renderHistoryList('lastWatchedList', opened);
+  renderHistoryList('completedList', done);
+}
+
+function renderAll(){
+  applyGreetings();
+  renderDashboardStats();
+  renderQuest();
+  renderHistory();
+  renderCalendar();
+  renderLibrary();
+  renderStats();
+  updateHud();
+}
+
+/* auto roll over to the new day at midnight, even if the tab is left open */
+function scheduleMidnightRefresh(){
+  const now = new Date();
+  const next = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1, 0, 0, 3);
+  const ms = next.getTime() - now.getTime();
+  setTimeout(()=>{
+    selectedDay = todayStr();
+    calCursor = new Date(); calCursor.setDate(1);
+    renderAll();
+    scheduleMidnightRefresh();
+  }, ms);
+}
+scheduleMidnightRefresh();
+
+const btnGoogle = document.getElementById('btnGoogle');
+const btnGithub = document.getElementById('btnGithub');
+const btnCloudSignIn = document.getElementById('btnCloudSignIn');
+const btnCloudSignOut = document.getElementById('btnCloudSignOut');
+if(btnGoogle) btnGoogle.addEventListener('click', ()=>window.DojoCloud && window.DojoCloud.signInGoogle());
+if(btnGithub) btnGithub.addEventListener('click', ()=>window.DojoCloud && window.DojoCloud.signInGithub());
+if(btnCloudSignIn) btnCloudSignIn.addEventListener('click', ()=>window.DojoCloud && window.DojoCloud.signInGoogle());
+if(btnCloudSignOut) btnCloudSignOut.addEventListener('click', ()=>window.DojoCloud && window.DojoCloud.signOut());
+
+if(window.DojoCloud){
+  window.DojoCloud.init(async (cloud)=>{
+    updateAccountUI();
+    const gate = document.getElementById('appGate');
+    const err = document.getElementById('gateError');
+    if(err && cloud.error) err.textContent = cloud.error;
+    if(cloud.user){
+      try{
+        const remote = await window.DojoCloud.pull();
+        if(remote) DATA = window.DojoCloud.mergeDojo(DATA, remote);
+        else DATA = window.DojoCloud.ensureIds(DATA);
+        await window.DojoCloud.push(DATA);
+        writeLocal();
+        renderAll();
+        updateAccountUI();
+      }catch(e){ console.warn('cloud sync failed', e); }
+      setupGate();
+    } else {
+      updateAccountUI();
+      setupGate();
+    }
+  });
+}
+setupGate();
+loadData();
+
+})();
+</script>
+</body>
+</html>
+
+
